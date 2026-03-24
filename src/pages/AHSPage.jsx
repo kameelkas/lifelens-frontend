@@ -15,17 +15,17 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { fetchVisual, fetchImageEncrypted, fetchAHSImage } from "../api/client";
+import { fetchImages, fetchImageEncrypted, fetchAHSImage } from "../api/client";
 
 // Render Fernet-encrypted bytes as pixel noise on a canvas
 // Returns a data URL string
 function encryptedBytesToNoiseUrl(arrayBuffer) {
-  const raw  = new Uint8Array(arrayBuffer);
-  const side = Math.max(64, Math.floor(Math.sqrt(raw.length / 3)));
+  const raw = new Uint8Array(arrayBuffer);
+  const side = Math.floor(Math.sqrt(raw.length / 3));
   const canvas = document.createElement("canvas");
-  canvas.width  = side;
+  canvas.width = side;
   canvas.height = side;
-  const ctx     = canvas.getContext("2d");
+  const ctx = canvas.getContext("2d");
   const imgData = ctx.createImageData(side, side);
   for (let i = 0; i < side * side; i++) {
     imgData.data[i * 4 + 0] = raw[i * 3 + 0] ?? 0;
@@ -42,10 +42,10 @@ function encryptedBytesToNoiseUrl(arrayBuffer) {
  * Shows noise by default, decrypted image after AHS password is confirmed.
  */
 function ImageCard({ imageId, sessionId, deviceId, ahsPassword }) {
-  const [noiseSrc,     setNoiseSrc]     = useState(null);
+  const [noiseSrc, setNoiseSrc] = useState(null);
   const [decryptedSrc, setDecryptedSrc] = useState(null);
-  const [decrypting,   setDecrypting]   = useState(false);
-  const [error,        setError]        = useState("");
+  const [decrypting, setDecrypting] = useState(false);
+  const [error, setError] = useState("");
 
   // Load noise version on mount
   useEffect(() => {
@@ -56,7 +56,10 @@ function ImageCard({ imageId, sessionId, deviceId, ahsPassword }) {
 
   // Decrypt when ahsPassword is provided
   useEffect(() => {
-    if (!ahsPassword) return;
+    if (!ahsPassword) {
+      setDecryptedSrc(null);
+      return;
+    }
     setDecrypting(true);
     setError("");
     fetchAHSImage(sessionId, imageId, deviceId, ahsPassword)
@@ -71,14 +74,14 @@ function ImageCard({ imageId, sessionId, deviceId, ahsPassword }) {
     <div className="bg-white/5 border border-white/10 rounded-lg overflow-hidden">
       <div className="aspect-square bg-black flex items-center justify-center">
         {src
-          ? <img src={src} alt={imageId} className="w-full h-full object-cover" />
+          ? <img src={src} alt={imageId} className="w-full h-full object-contain" />
           : <p className="text-brand-gray text-xs">Loading...</p>
         }
       </div>
       <div className="p-2">
         <p className="text-brand-gray text-xs truncate">{imageId}</p>
         {decrypting && <p className="text-brand-gold text-xs mt-1">Decrypting...</p>}
-        {error      && <p className="text-red-400 text-xs mt-1">{error}</p>}
+        {error && <p className="text-red-400 text-xs mt-1">{error}</p>}
         {decryptedSrc && !error && (
           <p className="text-green-400 text-xs mt-1">Decrypted</p>
         )}
@@ -88,29 +91,21 @@ function ImageCard({ imageId, sessionId, deviceId, ahsPassword }) {
 }
 
 export default function AHSPage() {
-  const { sessionId }             = useParams();
+  const { sessionId } = useParams();
   // device_id is embedded in session_id: session_{date}_{time}_{device_id}
   const deviceId = sessionId.split("_").slice(3).join("_");
-  const navigate                  = useNavigate();
+  const navigate = useNavigate();
 
-  const [imageIds,     setImageIds]     = useState([]);
-  const [loading,      setLoading]      = useState(true);
-  const [error,        setError]        = useState("");
-  const [password,     setPassword]     = useState("");
-  const [ahsPassword,  setAhsPassword]  = useState(""); // only set on submit
+  const [imageIds, setImageIds] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [password, setPassword] = useState("");
+  const [ahsPassword, setAhsPassword] = useState(""); // only set on submit
 
   // Load visual_output.json to get all image_ids for this session
   useEffect(() => {
-    fetchVisual(sessionId, deviceId)
-      .then((visual) => {
-        const ids = new Set();
-        Object.values(visual).forEach((part) => {
-          Object.values(part.injuries ?? {}).forEach((inj) => {
-            if (inj.image_id) ids.add(inj.image_id);
-          });
-        });
-        setImageIds([...ids]);
-      })
+    fetchImages(sessionId, deviceId)
+      .then((data) => setImageIds(data.images))
       .catch((err) => setError(err.message ?? "Failed to load session data"))
       .finally(() => setLoading(false));
   }, [sessionId]);
@@ -184,7 +179,7 @@ export default function AHSPage() {
 
         {/* Image grid */}
         {loading && <p className="text-brand-gray text-sm">Loading...</p>}
-        {error   && <p className="text-red-400 text-sm">{error}</p>}
+        {error && <p className="text-red-400 text-sm">{error}</p>}
 
         {!loading && !error && imageIds.length === 0 && (
           <p className="text-brand-gray text-sm">No images found for this session.</p>

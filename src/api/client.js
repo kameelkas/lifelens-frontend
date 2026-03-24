@@ -121,3 +121,9 @@ export async function fetchAHSImage(sessionId, imageId, deviceId, ahsPassword) {
   const blob = await res.blob();
   return URL.createObjectURL(blob);
 }
+
+export function fetchImages(sessionId, deviceId) {
+  return request(`/sessions/${sessionId}/images?device_id=${deviceId}`, {
+    headers: authHeaders(),
+  });
+}
