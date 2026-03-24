@@ -11,6 +11,11 @@
  *   - SSE events trigger re-fetches of the relevant data type
  *   - A "Live" badge is shown in the header
  *   - session_end event clears the live state
+ *
+ * Layout:
+ *   - BodyMap  gets ~35% width on large screens (lg:w-[35%])
+ *   - Timeline gets the remaining width (flex-1)
+ *   - On smaller screens they stack vertically (BodyMap above Timeline)
  */
 
 import { useEffect, useState } from "react";
@@ -81,7 +86,7 @@ export default function SessionPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-brand-navy flex items-center justify-center">
-        <p className="text-brand-gray text-sm">Loading session...</p>
+        <p className="text-brand-gray text-sm">Loading session…</p>
       </div>
     );
   }
@@ -121,20 +126,27 @@ export default function SessionPage() {
         )}
       </header>
 
-      {/* Main content — body map left, timeline right */}
-      <main className="max-w-5xl mx-auto px-8 py-10">
-        <div className="flex flex-col md:flex-row gap-10">
+      {/* Main content */}
+      <main className="max-w-6xl mx-auto px-8 py-10">
+        {/*
+          Two-column layout:
+            BodyMap  — lg:w-[35%], flex-shrink-0
+            Timeline — flex-1, min-w-0 (prevents flex overflow)
+          On screens smaller than lg (1024px) they stack: body map above, timeline below.
+        */}
+        <div className="flex flex-col lg:flex-row gap-8 lg:gap-10 items-start">
 
-          {/* Body map */}
-          <div className="md:w-64 flex-shrink-0">
+          {/* Body map — fixed proportion, centred when stacked */}
+          <div className="w-full lg:w-[35%] flex-shrink-0 flex justify-center lg:justify-start">
             <BodyMap visual={visual} sessionId={sessionId} deviceId={deviceId} />
           </div>
 
-          {/* Timeline */}
-          <div className="flex-1">
+          {/* Timeline — takes remaining width; min-w-0 prevents it from blowing out flex */}
+          <div className="flex-1 min-w-0">
             <Timeline
               medications={medications}
               interventions={interventions}
+              visual={visual}
             />
           </div>
 

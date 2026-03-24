@@ -1,142 +1,196 @@
 /**
  * BodyMap.jsx
  *
- * Renders a simple SVG human body diagram divided into named regions.
- * All regions start green. When visual data arrives, regions with a
- * detected injury turn red with opacity proportional to accuracy.
+ * SVG human body diagram with three distinct states per region:
  *
- * Props:
- *   visual:    the parsed visual_output.json object, e.g.:
- *              { "hand2": { "injuries": { "Bruises": { accuracy: 0.36, image_id: "..." } } } }
- *   sessionId: used to build image URLs for hover preview
- *   deviceId:  used to build image URLs for hover preview
+ *   grey  (status: "none")    — no data detected yet; no hover interaction
+ *   green (status: "healthy") — no_injury confirmed; hover shows tooltip + image
+ *   red   (status: "injured") — one or more real injuries; hover shows all injuries + image
  *
- * Region color logic:
- *   - No data or empty injuries       → green at full opacity
- *   - Only "no_injury" entries        → green at full opacity
- *   - At least one real injury found  → red at opacity = highest accuracy (min 0.3)
+ * Architecture:
+ *   Region       — pure SVG shape, fires onHover / onHoverEnd up to parent
+ *   BodyMap      — owns all hover state, image cache, and tooltip rendering
  *
- * Body part naming:
- *   1 = right side, 2 = left side
+ * The tooltip is a plain HTML div rendered below the SVG (not inside it via
+ * foreignObject). This means:
+ *   - No SVG clipping
+ *   - No overlap with the Timeline or other body parts
+ *   - No click-through to elements underneath
+ *
+ * Image cache: blob URLs are stored in a ref keyed by image_id so each image
+ * is fetched at most once per session page mount. All URLs are revoked on unmount.
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { fetchDecryptedImage } from "../api/client";
 
+const GREY_COLOR    = "#6b7280";
 const HEALTHY_COLOR = "#22c55e";
 const INJURED_COLOR = "#ef4444";
 const MIN_OPACITY   = 0.3;
 
-/**
- * Derive fill color, opacity, and the best injury entry for a region.
- * Returns the best matching injury (for image hover) or null if healthy.
- */
+// ── State derivation ──────────────────────────────────────────────────────────
+
 function getRegionState(regionKey, visual) {
   const part = visual?.[regionKey];
-  if (!part?.injuries) return { fill: HEALTHY_COLOR, opacity: 1, best: null };
 
-  const injuryEntries = Object.entries(part.injuries).filter(
-    ([type]) => type !== "no_injury"
-  );
+  if (!part?.injuries) {
+    return { status: "none", fill: GREY_COLOR, opacity: 0.5, allInjuries: [], previewImageId: null };
+  }
 
-  if (injuryEntries.length === 0) return { fill: HEALTHY_COLOR, opacity: 1, best: null };
+  const entries = Object.entries(part.injuries);
 
-  // Pick the injury with the highest accuracy score
-  const [bestType, bestData] = injuryEntries.reduce((a, b) =>
-    a[1].accuracy > b[1].accuracy ? a : b
-  );
+  if (entries.length === 0) {
+    // Model ran but produced no classification — treat same as no data
+    return { status: "none", fill: GREY_COLOR, opacity: 0.5, allInjuries: [], previewImageId: null };
+  }
 
+  const noInjuryEntry = entries.find(([type]) => type === "no_injury");
+  const realInjuries  = entries
+    .filter(([type]) => type !== "no_injury")
+    .map(([type, data]) => ({ type, ...data }));
+
+  if (realInjuries.length === 0) {
+    return {
+      status: "healthy",
+      fill: HEALTHY_COLOR,
+      opacity: 1,
+      allInjuries: [],
+      previewImageId: noInjuryEntry?.[1]?.image_id ?? null,
+    };
+  }
+
+  const best = realInjuries.reduce((a, b) => (a.accuracy > b.accuracy ? a : b));
   return {
-    fill:    INJURED_COLOR,
-    opacity: Math.max(MIN_OPACITY, bestData.accuracy ?? MIN_OPACITY),
-    best:    { type: bestType, ...bestData },
+    status: "injured",
+    fill: INJURED_COLOR,
+    opacity: Math.max(MIN_OPACITY, best.accuracy ?? MIN_OPACITY),
+    allInjuries: realInjuries,
+    previewImageId: best.image_id ?? null,
   };
 }
 
-/**
- * A single labeled SVG region with hover support.
- * On hover, fetches the decrypted image from the server and displays it.
- */
-function Region({ label, visual, sessionId, deviceId, children }) {
-  const [hovered,    setHovered]    = useState(false);
-  const [imgSrc,     setImgSrc]     = useState(null);
-  const [imgLoading, setImgLoading] = useState(false);
-  const state = getRegionState(label, visual);
+// ── Region — pure SVG shape, no local state ───────────────────────────────────
 
-  // Fetch decrypted image when the user first hovers over an injured region
-  useEffect(() => {
-  if (!hovered || !state.best?.image_id || imgSrc) return;
-
-  let objectUrl = null;
-  setImgLoading(true);
-  fetchDecryptedImage(sessionId, state.best.image_id, deviceId)
-    .then((src) => {
-      objectUrl = src;
-      setImgSrc(src);
-    })
-    .catch(() => setImgSrc(null))
-    .finally(() => setImgLoading(false));
-
-  return () => {
-    if (objectUrl) URL.revokeObjectURL(objectUrl);
-  };
-}, [hovered, state.best?.image_id, imgSrc, sessionId, deviceId]);
+function Region({ regionKey, visual, onHover, onHoverEnd, children }) {
+  const state    = getRegionState(regionKey, visual);
+  const canHover = state.status !== "none";
 
   return (
     <g
-      style={{ fill: state.fill, opacity: state.opacity, cursor: state.best ? "pointer" : "default" }}
+      style={{ fill: state.fill, opacity: state.opacity, cursor: canHover ? "pointer" : "default" }}
       className="transition-all duration-500"
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
+      onMouseEnter={() => canHover && onHover(regionKey, state)}
+      onMouseLeave={onHoverEnd}
     >
       {children}
-
-      {/* Hover tooltip — shows injury type and decrypted image */}
-      {hovered && state.best && (
-        <foreignObject x="110" y="0" width="160" height="220" style={{ overflow: "visible" }}>
-          <div
-            xmlns="http://www.w3.org/1999/xhtml"
-            className="bg-brand-navy border border-white/20 rounded-lg p-2 shadow-lg"
-            style={{ pointerEvents: "none" }}
-          >
-            <p className="text-white text-xs font-medium mb-1">{label} — {state.best.type}</p>
-            <p className="text-brand-gray text-xs mb-2">
-              Confidence: {(state.best.accuracy * 100).toFixed(0)}%
-            </p>
-            {imgLoading && (
-              <p className="text-brand-gray text-xs">Loading...</p>
-            )}
-            {imgSrc && (
-              <img
-                src={imgSrc}
-                alt={`${label} injury`}
-                className="w-32 h-24 object-cover rounded"
-              />
-            )}
-          </div>
-        </foreignObject>
-      )}
     </g>
   );
 }
 
+// ── Tooltip — plain HTML div, rendered below the SVG ─────────────────────────
+
+function Tooltip({ label, state, imgSrc, imgLoading }) {
+  return (
+    <div className="w-full mt-2 rounded-lg border border-white/15 bg-brand-navy/95 p-4 shadow-2xl">
+      <p className="text-white text-sm font-semibold capitalize mb-2">{label}</p>
+
+      {state.status === "healthy" && (
+        <p className="text-green-400 text-xs mb-3">No injuries detected</p>
+      )}
+
+      {state.status === "injured" && (
+        <ul className="flex flex-col gap-1 mb-3">
+          {[...state.allInjuries]
+            .sort((a, b) => b.accuracy - a.accuracy)
+            .map((inj) => (
+              <li key={inj.type} className="flex items-center justify-between">
+                <span className="text-red-400 text-xs">{inj.type}</span>
+                <span className="text-white/40 text-xs">{(inj.accuracy * 100).toFixed(0)}%</span>
+              </li>
+            ))}
+        </ul>
+      )}
+
+      {imgLoading && <p className="text-white/30 text-xs">Loading image…</p>}
+      {imgSrc && (
+        <img src={imgSrc} alt={label} className="w-full rounded object-contain max-h-48" />
+      )}
+    </div>
+  );
+}
+
+// ── BodyMap ───────────────────────────────────────────────────────────────────
+
 export default function BodyMap({ visual = {}, sessionId, deviceId }) {
-  const r = (key) => ({ label: key, visual, sessionId, deviceId });
+  // Which region is currently hovered: { key, state } or null
+  const [active,     setActive]     = useState(null);
+  const [imgSrc,     setImgSrc]     = useState(null);
+  const [imgLoading, setImgLoading] = useState(false);
+
+  // Cache of imageId → blob URL so each image is fetched at most once.
+  // Ref so cache updates don't trigger re-renders.
+  const imgCache = useRef({});
+
+  // Revoke all cached blob URLs on unmount
+  useEffect(() => {
+    const cache = imgCache.current;
+    return () => Object.values(cache).forEach((url) => URL.revokeObjectURL(url));
+  }, []);
+
+  const handleHover = useCallback((key, state) => {
+    setActive({ key, state });
+
+    const imageId = state.previewImageId;
+    if (!imageId) { setImgSrc(null); return; }
+
+    // Serve from cache if available — no extra network request
+    if (imgCache.current[imageId]) {
+      setImgSrc(imgCache.current[imageId]);
+      return;
+    }
+
+    setImgSrc(null);
+    setImgLoading(true);
+    fetchDecryptedImage(sessionId, imageId, deviceId)
+      .then((src) => { imgCache.current[imageId] = src; setImgSrc(src); })
+      .catch(() => setImgSrc(null))
+      .finally(() => setImgLoading(false));
+  }, [sessionId, deviceId]);
+
+  const handleHoverEnd = useCallback(() => {
+    setActive(null);
+    setImgSrc(null);
+    setImgLoading(false);
+  }, []);
+
+  const r = (key) => ({ regionKey: key, visual, onHover: handleHover, onHoverEnd: handleHoverEnd });
 
   return (
-    <div className="flex flex-col items-center gap-3">
+    <div className="flex flex-col items-center gap-2 w-full">
       <h2 className="text-white/60 text-sm uppercase tracking-widest">Body Map</h2>
 
-      <div className="flex items-center gap-6 text-xs text-brand-gray mb-2">
+      {/* Legend */}
+      <div className="flex items-center gap-3 text-xs text-brand-gray flex-wrap justify-center mb-1">
         <span className="flex items-center gap-1">
-          <span className="inline-block w-3 h-3 rounded-full bg-green-500" /> Healthy
+          <span className="inline-block w-3 h-3 rounded-full" style={{ background: GREY_COLOR }} />
+          No data
         </span>
         <span className="flex items-center gap-1">
-          <span className="inline-block w-3 h-3 rounded-full bg-red-500" /> Injury detected
+          <span className="inline-block w-3 h-3 rounded-full bg-green-500" />
+          Healthy
+        </span>
+        <span className="flex items-center gap-1">
+          <span className="inline-block w-3 h-3 rounded-full bg-red-500" />
+          Injury
         </span>
       </div>
 
-      <svg viewBox="0 0 200 480" className="w-48" xmlns="http://www.w3.org/2000/svg">
+      <svg
+        viewBox="0 0 200 285"
+        className="w-full max-w-[280px]"
+        xmlns="http://www.w3.org/2000/svg"
+      >
         <Region {...r("head")}>
           <ellipse cx="100" cy="30" rx="28" ry="20" />
         </Region>
@@ -189,6 +243,16 @@ export default function BodyMap({ visual = {}, sessionId, deviceId }) {
           <text x="117" y="270">foot L</text>
         </g>
       </svg>
+
+      {/* Tooltip renders here — below the SVG, in normal document flow */}
+      {active && (
+        <Tooltip
+          label={active.key}
+          state={active.state}
+          imgSrc={imgSrc}
+          imgLoading={imgLoading}
+        />
+      )}
     </div>
   );
 }
