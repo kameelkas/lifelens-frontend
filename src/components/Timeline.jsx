@@ -24,7 +24,8 @@
  *   x-axis; the tooltip differentiates them by injury type and confidence.
  */
 
-import { useState, useRef, useCallback, useMemo } from "react";
+import { useState, useRef, useCallback, useMemo, useEffect } from "react";
+import { createPortal } from "react-dom";
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
@@ -199,48 +200,87 @@ function InjuryTooltip({ event }) {
     );
 }
 
+// ── Portal Tooltip ────────────────────────────────────────────────────────────
+
+/**
+ * Tooltip rendered via createPortal at document.body so it is never clipped
+ * by any ancestor overflow container.  Positioned in viewport coordinates
+ * based on the dot's bounding rect.
+ */
+function PortalTooltip({ dotRect, laneType, event }) {
+    const tooltipRef = useRef(null);
+    const [pos, setPos] = useState(null);
+
+    useEffect(() => {
+        if (!dotRect || !tooltipRef.current) return;
+        const tt = tooltipRef.current.getBoundingClientRect();
+        const GAP = 10;
+
+        let top = dotRect.top - tt.height - GAP;
+        let left = dotRect.left + dotRect.width / 2 - tt.width / 2;
+
+        if (top < 4) top = dotRect.bottom + GAP;
+        if (left < 4) left = 4;
+        if (left + tt.width > window.innerWidth - 4) left = window.innerWidth - tt.width - 4;
+
+        setPos({ top, left });
+    }, [dotRect]);
+
+    return createPortal(
+        <div
+            ref={tooltipRef}
+            className="fixed z-[9999] bg-[#0d1829] border border-white/15 rounded-lg p-3 shadow-2xl w-72 max-w-[90vw]"
+            style={{
+                pointerEvents: "none",
+                top: pos ? `${pos.top}px` : "-9999px",
+                left: pos ? `${pos.left}px` : "-9999px",
+            }}
+        >
+            {laneType === "medication" && <MedicationTooltip event={event} />}
+            {laneType === "intervention" && <InterventionTooltip event={event} />}
+            {laneType === "injury" && <InjuryTooltip event={event} />}
+        </div>,
+        document.body,
+    );
+}
+
 // ── Dot ───────────────────────────────────────────────────────────────────────
 
 /**
- * A single event marker dot with a tooltip.
- * The tooltip flips to the left when the dot is in the right half of the chart
- * to avoid overflowing the container edge.
+ * A single event marker dot.
+ * On hover, a portal-based tooltip is rendered at document.body level so it
+ * escapes any overflow clipping from the scrollable chart container.
  */
 function Dot({ event, pct, laneType }) {
     const [hovered, setHovered] = useState(false);
-    const flipLeft = pct > 55; // tooltip opens to the left when dot is right of centre
+    const dotRef = useRef(null);
+    const [dotRect, setDotRect] = useState(null);
+
+    const handleEnter = useCallback(() => {
+        setHovered(true);
+        if (dotRef.current) setDotRect(dotRef.current.getBoundingClientRect());
+    }, []);
+
+    const handleLeave = useCallback(() => {
+        setHovered(false);
+        setDotRect(null);
+    }, []);
 
     return (
         <div
             className={`absolute top-1/2 -translate-y-1/2 -translate-x-1/2 ${event._isNew ? "animate-fadeIn" : ""}`}
             style={{ left: `${pct}%` }}
         >
-            {/* Dot */}
             <div
+                ref={dotRef}
                 className="w-3 h-3 rounded-full bg-green-400 border-2 border-green-200 shadow-md
                    cursor-pointer hover:scale-150 transition-transform duration-150 z-10 relative"
-                onMouseEnter={() => setHovered(true)}
-                onMouseLeave={() => setHovered(false)}
+                onMouseEnter={handleEnter}
+                onMouseLeave={handleLeave}
             />
 
-            {/* Tooltip */}
-            {hovered && (
-                <div
-                    className={`absolute z-30 bottom-full mb-3 bg-[#0d1829] border border-white/15
-                      rounded-lg p-3 shadow-2xl w-64
-                      ${flipLeft ? "right-0" : "left-0"}`}
-                    style={{ pointerEvents: "none" }}
-                >
-                    {/* Arrow pointing down */}
-                    <div
-                        className={`absolute top-full -translate-y-px w-2.5 h-2.5 bg-[#0d1829]
-                         border-b border-r border-white/15 rotate-45
-                         ${flipLeft ? "right-3" : "left-3"}`}
-                    />
-                    {laneType === "medication" && <MedicationTooltip event={event} />}
-                    {laneType === "intervention" && <InterventionTooltip event={event} />}
-                    {laneType === "injury" && <InjuryTooltip event={event} />}
-                </div>
+            {hovered && dotRect && (
+                <PortalTooltip dotRect={dotRect} laneType={laneType} event={event} />
             )}
         </div>
     );
@@ -353,7 +393,7 @@ export default function Timeline({ medications = [], interventions = [], visual 
     }, []);
 
     return (
-        <div className="flex flex-col gap-1 w-full">
+        <div className="flex flex-col gap-1 w-full overflow-hidden">
             <h2 className="text-white/60 text-sm uppercase tracking-widest mb-3">Timeline</h2>
 
             {!hasData && (
@@ -385,7 +425,7 @@ export default function Timeline({ medications = [], interventions = [], visual 
                         {/* Lane rows + cursor overlay */}
                         <div
                             ref={chartRef}
-                            className="relative flex flex-col border-l border-white/10 overflow-visible"
+                            className="relative flex flex-col border-l border-white/10"
                             onMouseMove={handleMouseMove}
                             onMouseLeave={handleMouseLeave}
                         >
