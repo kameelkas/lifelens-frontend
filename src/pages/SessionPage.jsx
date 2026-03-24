@@ -18,12 +18,15 @@
  *   - On smaller screens they stack vertically (BodyMap above Timeline)
  */
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { fetchMedications, fetchInterventions, fetchVisual, fetchActiveSession } from "../api/client";
 import useSSE from "../hooks/useSSE";
 import BodyMap from "../components/BodyMap";
 import Timeline from "../components/Timeline";
+
+const SSE_DEBOUNCE_MS = 500;
+const STAGGER_DELAY_MS = 150;
 
 export default function SessionPage() {
   const { sessionId } = useParams();
@@ -63,28 +66,56 @@ export default function SessionPage() {
     load();
   }, [sessionId]);
 
-  // SSE — re-fetch only the data type that changed
+  // Debounce timers — one per data type so rapid SSE bursts
+  // collapse into a single fetch instead of N redundant fetches.
+  const debounceTimers = useRef({});
+
+  const debouncedFetch = useCallback((dataType, fetchFn) => {
+    clearTimeout(debounceTimers.current[dataType]);
+    debounceTimers.current[dataType] = setTimeout(fetchFn, SSE_DEBOUNCE_MS);
+  }, []);
+
+  useEffect(() => {
+    const timers = debounceTimers.current;
+    return () => Object.values(timers).forEach(clearTimeout);
+  }, []);
+
+  // SSE — debounced re-fetch per data type, with stagger indices on new items
   useSSE((event) => {
     if (event.session_id !== sessionId) return;
 
     if (event.data_type === "medx") {
-      fetchMedications(sessionId).then(newMeds => {
-        setMedications(prev => {
-          const existingIds = new Set(prev.map(m => m.id));
-          return newMeds.map(m => ({ ...m, _isNew: !existingIds.has(m.id) }));
-        });
-      }).catch(() => { });
+      debouncedFetch("medx", () => {
+        fetchMedications(sessionId).then(newMeds => {
+          setMedications(prev => {
+            const existingIds = new Set(prev.map(m => m.id));
+            let idx = 0;
+            return newMeds.map(m => {
+              const isNew = !existingIds.has(m.id);
+              return { ...m, _isNew: isNew, _animIndex: isNew ? idx++ : undefined };
+            });
+          });
+        }).catch(() => { });
+      });
     }
     if (event.data_type === "intervention") {
-      fetchInterventions(sessionId).then(newInts => {
-        setInterventions(prev => {
-          const existingIds = new Set(prev.map(i => i.id));
-          return newInts.map(i => ({ ...i, _isNew: !existingIds.has(i.id) }));
-        });
-      }).catch(() => { });
+      debouncedFetch("intervention", () => {
+        fetchInterventions(sessionId).then(newInts => {
+          setInterventions(prev => {
+            const existingIds = new Set(prev.map(i => i.id));
+            let idx = 0;
+            return newInts.map(i => {
+              const isNew = !existingIds.has(i.id);
+              return { ...i, _isNew: isNew, _animIndex: isNew ? idx++ : undefined };
+            });
+          });
+        }).catch(() => { });
+      });
     }
     if (event.data_type === "visual") {
-      fetchVisual(sessionId, deviceId).then(setVisual).catch(() => { });
+      debouncedFetch("visual", () => {
+        fetchVisual(sessionId, deviceId).then(setVisual).catch(() => { });
+      });
     }
     if (event.data_type === "session_end") {
       setIsLive(false);

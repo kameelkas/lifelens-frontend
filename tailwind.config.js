@@ -11,14 +11,15 @@ export default {
         "brand-red":   "#370A16",
       },
       keyframes: {
-      fadeIn: {
-        '0%':   { opacity: '0', transform: 'translateY(-6px) translateX(-50%)' },
-        '100%': { opacity: '1', transform: 'translateY(0)   translateX(-50%)' },
+        dotReveal: {
+          '0%':   { opacity: '0', transform: 'scale(0)' },
+          '60%':  { opacity: '1', transform: 'scale(1.3)' },
+          '100%': { opacity: '1', transform: 'scale(1)' },
+        },
       },
-    },
-    animation: {
-      fadeIn: 'fadeIn 0.5s ease forwards',
-    },
+      animation: {
+        'dot-reveal': 'dotReveal 0.35s ease-out forwards',
+      },
     },
   },
   plugins: [],

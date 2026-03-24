@@ -251,6 +251,8 @@ function PortalTooltip({ dotRect, laneType, event }) {
  * On hover, a portal-based tooltip is rendered at document.body level so it
  * escapes any overflow clipping from the scrollable chart container.
  */
+const STAGGER_DELAY_MS = 150;
+
 function Dot({ event, pct, topPct = 50, laneType }) {
     const [hovered, setHovered] = useState(false);
     const dotRef = useRef(null);
@@ -266,15 +268,22 @@ function Dot({ event, pct, topPct = 50, laneType }) {
         setDotRect(null);
     }, []);
 
+    const isNew = event._isNew;
+    const staggerDelay = isNew && event._animIndex != null
+        ? `${event._animIndex * STAGGER_DELAY_MS}ms`
+        : undefined;
+
     return (
         <div
-            className={`absolute -translate-y-1/2 -translate-x-1/2 ${event._isNew ? "animate-fadeIn" : ""}`}
+            className="absolute -translate-y-1/2 -translate-x-1/2"
             style={{ left: `${pct}%`, top: `${topPct}%` }}
         >
             <div
                 ref={dotRef}
-                className="w-3 h-3 rounded-full bg-green-400 border-2 border-green-200 shadow-md
-                   cursor-pointer hover:scale-150 transition-transform duration-150 z-10 relative"
+                className={`w-3 h-3 rounded-full bg-green-400 border-2 border-green-200 shadow-md
+                   cursor-pointer hover:scale-150 transition-transform duration-150 z-10 relative
+                   ${isNew ? "animate-dot-reveal" : ""}`}
+                style={isNew ? { opacity: 0, animationDelay: staggerDelay } : undefined}
                 onMouseEnter={handleEnter}
                 onMouseLeave={handleLeave}
             />
