@@ -289,14 +289,14 @@ function Dot({ event, pct, topPct = 50, laneType }) {
 // ── LaneRow ───────────────────────────────────────────────────────────────────
 
 /** Top/bottom padding (%) inside the lane so dots don't touch the edges */
-const LANE_PAD_PCT = 15;
+const LANE_PAD_PCT = 10;
 
 /**
  * X-axis proximity threshold (% of chart width). Dots closer than this
  * on the x-axis are considered overlapping and will be fanned out vertically.
- * ~2% ≈ one dot diameter on the minimum 600px chart.
+ * 3% catches dots a few seconds apart on a typical session.
  */
-const DOT_PROXIMITY_PCT = 2;
+const DOT_PROXIMITY_PCT = 3;
 
 /**
  * Group events whose x-positions are within DOT_PROXIMITY_PCT of each other
@@ -355,7 +355,7 @@ function LaneRow({ events, laneType, minTime, maxTime }) {
     );
 
     return (
-        <div className="relative h-16 border-b border-white/5 overflow-visible">
+        <div className="relative h-36 border-b border-white/5 overflow-visible">
             {/* Faint EKG pattern */}
             <EkgBackground />
 
@@ -469,7 +469,7 @@ export default function Timeline({ medications = [], interventions = [], visual 
                     {LANES.map(({ key, label }) => (
                         <div
                             key={key}
-                            className="h-16 flex items-center border-b border-white/5 pr-3"
+                            className="h-36 flex items-center border-b border-white/5 pr-3"
                         >
                             <span className="text-white/40 text-xs uppercase tracking-wider leading-snug">
                                 {label}
