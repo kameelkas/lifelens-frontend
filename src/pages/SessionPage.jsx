@@ -137,22 +137,22 @@ export default function SessionPage() {
       </header>
 
       {/* Main content */}
-      <main className="max-w-[90%] mx-auto px-8 py-10">
+      <main className="max-w-[90%] mx-auto px-8 py-10 overflow-hidden">
         {/*
           Two-column layout:
             BodyMap  — lg:w-[35%], flex-shrink-0
             Timeline — flex-1, min-w-0 (prevents flex overflow)
           On screens smaller than lg (1024px) they stack: body map above, timeline below.
         */}
-        <div className="flex flex-col lg:flex-row gap-4 items-start">
+        <div className="flex flex-col lg:flex-row gap-4 lg:items-start">
 
           {/* Body map — fixed proportion, centred when stacked */}
           <div className="w-full lg:w-[35%] flex-shrink-0 flex justify-center lg:justify-start">
             <BodyMap visual={visual} sessionId={sessionId} deviceId={deviceId} />
           </div>
 
-          {/* Timeline — takes remaining width; min-w-0 prevents it from blowing out flex */}
-          <div className="flex-1 min-w-0">
+          {/* Timeline — takes remaining width; min-w-0 + overflow-hidden contain scroll */}
+          <div className="flex-1 min-w-0 w-full overflow-hidden">
             <Timeline
               medications={medications}
               interventions={interventions}
