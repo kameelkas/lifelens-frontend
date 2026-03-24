@@ -68,10 +68,20 @@ export default function SessionPage() {
     if (event.session_id !== sessionId) return;
 
     if (event.data_type === "medx") {
-      fetchMedications(sessionId).then(setMedications).catch(() => { });
+      fetchMedications(sessionId).then(newMeds => {
+        setMedications(prev => {
+          const existingIds = new Set(prev.map(m => m.id));
+          return newMeds.map(m => ({ ...m, _isNew: !existingIds.has(m.id) }));
+        });
+      }).catch(() => { });
     }
     if (event.data_type === "intervention") {
-      fetchInterventions(sessionId).then(setInterventions).catch(() => { });
+      fetchInterventions(sessionId).then(newInts => {
+        setInterventions(prev => {
+          const existingIds = new Set(prev.map(i => i.id));
+          return newInts.map(i => ({ ...i, _isNew: !existingIds.has(i.id) }));
+        });
+      }).catch(() => { });
     }
     if (event.data_type === "visual") {
       fetchVisual(sessionId, deviceId).then(setVisual).catch(() => { });

@@ -206,7 +206,7 @@ function Dot({ event, pct, laneType }) {
 
     return (
         <div
-            className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2"
+            className={`absolute top-1/2 -translate-y-1/2 -translate-x-1/2 ${event._isNew ? "animate-fadeIn" : ""}`}
             style={{ left: `${pct}%` }}
         >
             {/* Dot */}

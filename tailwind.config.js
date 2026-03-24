@@ -10,6 +10,15 @@ export default {
         "brand-gray":  "#717787",
         "brand-red":   "#370A16",
       },
+      keyframes: {
+      fadeIn: {
+        '0%':   { opacity: '0', transform: 'translateY(-6px) translateX(-50%)' },
+        '100%': { opacity: '1', transform: 'translateY(0)   translateX(-50%)' },
+      },
+    },
+    animation: {
+      fadeIn: 'fadeIn 0.5s ease forwards',
+    },
     },
   },
   plugins: [],
