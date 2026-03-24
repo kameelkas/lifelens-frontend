@@ -292,31 +292,52 @@ function Dot({ event, pct, topPct = 50, laneType }) {
 const LANE_PAD_PCT = 15;
 
 /**
- * Group events that share the same time value and compute a vertical offset
- * (topPct) for each so they fan out within the lane instead of stacking.
+ * X-axis proximity threshold (% of chart width). Dots closer than this
+ * on the x-axis are considered overlapping and will be fanned out vertically.
+ * ~2% ≈ one dot diameter on the minimum 600px chart.
+ */
+const DOT_PROXIMITY_PCT = 2;
+
+/**
+ * Group events whose x-positions are within DOT_PROXIMITY_PCT of each other
+ * and compute a vertical offset (topPct) for each so they fan out within the
+ * lane instead of stacking invisibly.
+ *
+ * Uses a sweep-line approach on the sorted pct values: consecutive events
+ * within the threshold are merged into the same group (chaining — if A
+ * overlaps B and B overlaps C, all three form one group).
  *
  * Single events sit at 50%. Groups of N are evenly distributed between
  * LANE_PAD_PCT and (100 - LANE_PAD_PCT).
  */
-function assignVerticalOffsets(events) {
-    const groups = new Map();
-    for (const event of events) {
-        const key = event.time;
-        if (!groups.has(key)) groups.set(key, []);
-        groups.get(key).push(event);
+function assignVerticalOffsets(events, minTime, maxTime) {
+    if (events.length === 0) return [];
+
+    const items = events
+        .map((event) => ({ event, pct: timeToPct(event.time, minTime, maxTime) }))
+        .sort((a, b) => a.pct - b.pct);
+
+    const groups = [[items[0]]];
+
+    for (let i = 1; i < items.length; i++) {
+        const current = groups[groups.length - 1];
+        const groupMaxPct = current[current.length - 1].pct;
+        if (items[i].pct - groupMaxPct < DOT_PROXIMITY_PCT) {
+            current.push(items[i]);
+        } else {
+            groups.push([items[i]]);
+        }
     }
 
     const result = [];
-    for (const group of groups.values()) {
+    for (const group of groups) {
         if (group.length === 1) {
-            result.push({ event: group[0], topPct: 50 });
+            result.push({ event: group[0].event, topPct: 50 });
         } else {
             const usable = 100 - 2 * LANE_PAD_PCT;
-            group.forEach((event, i) => {
-                const topPct = group.length === 1
-                    ? 50
-                    : LANE_PAD_PCT + (i / (group.length - 1)) * usable;
-                result.push({ event, topPct });
+            group.forEach((item, i) => {
+                const topPct = LANE_PAD_PCT + (i / (group.length - 1)) * usable;
+                result.push({ event: item.event, topPct });
             });
         }
     }
@@ -329,8 +350,8 @@ function assignVerticalOffsets(events) {
  */
 function LaneRow({ events, laneType, minTime, maxTime }) {
     const positioned = useMemo(
-        () => assignVerticalOffsets(events),
-        [events],
+        () => assignVerticalOffsets(events, minTime, maxTime),
+        [events, minTime, maxTime],
     );
 
     return (
