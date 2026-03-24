@@ -251,7 +251,7 @@ function PortalTooltip({ dotRect, laneType, event }) {
  * On hover, a portal-based tooltip is rendered at document.body level so it
  * escapes any overflow clipping from the scrollable chart container.
  */
-function Dot({ event, pct, laneType }) {
+function Dot({ event, pct, topPct = 50, laneType }) {
     const [hovered, setHovered] = useState(false);
     const dotRef = useRef(null);
     const [dotRect, setDotRect] = useState(null);
@@ -268,8 +268,8 @@ function Dot({ event, pct, laneType }) {
 
     return (
         <div
-            className={`absolute top-1/2 -translate-y-1/2 -translate-x-1/2 ${event._isNew ? "animate-fadeIn" : ""}`}
-            style={{ left: `${pct}%` }}
+            className={`absolute -translate-y-1/2 -translate-x-1/2 ${event._isNew ? "animate-fadeIn" : ""}`}
+            style={{ left: `${pct}%`, top: `${topPct}%` }}
         >
             <div
                 ref={dotRef}
@@ -288,11 +288,51 @@ function Dot({ event, pct, laneType }) {
 
 // ── LaneRow ───────────────────────────────────────────────────────────────────
 
+/** Top/bottom padding (%) inside the lane so dots don't touch the edges */
+const LANE_PAD_PCT = 15;
+
+/**
+ * Group events that share the same time value and compute a vertical offset
+ * (topPct) for each so they fan out within the lane instead of stacking.
+ *
+ * Single events sit at 50%. Groups of N are evenly distributed between
+ * LANE_PAD_PCT and (100 - LANE_PAD_PCT).
+ */
+function assignVerticalOffsets(events) {
+    const groups = new Map();
+    for (const event of events) {
+        const key = event.time;
+        if (!groups.has(key)) groups.set(key, []);
+        groups.get(key).push(event);
+    }
+
+    const result = [];
+    for (const group of groups.values()) {
+        if (group.length === 1) {
+            result.push({ event: group[0], topPct: 50 });
+        } else {
+            const usable = 100 - 2 * LANE_PAD_PCT;
+            group.forEach((event, i) => {
+                const topPct = group.length === 1
+                    ? 50
+                    : LANE_PAD_PCT + (i / (group.length - 1)) * usable;
+                result.push({ event, topPct });
+            });
+        }
+    }
+    return result;
+}
+
 /**
  * One horizontal lane row in the chart area (no label — labels are in a
  * separate fixed column so they stay aligned during x-axis interaction).
  */
 function LaneRow({ events, laneType, minTime, maxTime }) {
+    const positioned = useMemo(
+        () => assignVerticalOffsets(events),
+        [events],
+    );
+
     return (
         <div className="relative h-16 border-b border-white/5 overflow-visible">
             {/* Faint EKG pattern */}
@@ -302,11 +342,12 @@ function LaneRow({ events, laneType, minTime, maxTime }) {
             <div className="absolute inset-x-0 top-1/2 h-px bg-white/5 pointer-events-none" />
 
             {/* Event dots */}
-            {events.map((event) => (
+            {positioned.map(({ event, topPct }) => (
                 <Dot
                     key={event.id}
                     event={event}
                     pct={timeToPct(event.time, minTime, maxTime)}
+                    topPct={topPct}
                     laneType={laneType}
                 />
             ))}
