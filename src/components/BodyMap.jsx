@@ -24,10 +24,10 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { fetchDecryptedImage } from "../api/client";
 
-const GREY_COLOR    = "#6b7280";
+const GREY_COLOR = "#6b7280";
 const HEALTHY_COLOR = "#22c55e";
 const INJURED_COLOR = "#ef4444";
-const MIN_OPACITY   = 0.3;
+const MIN_OPACITY = 0.3;
 
 // ── State derivation ──────────────────────────────────────────────────────────
 
@@ -46,7 +46,7 @@ function getRegionState(regionKey, visual) {
   }
 
   const noInjuryEntry = entries.find(([type]) => type === "no_injury");
-  const realInjuries  = entries
+  const realInjuries = entries
     .filter(([type]) => type !== "no_injury")
     .map(([type, data]) => ({ type, ...data }));
 
@@ -73,7 +73,7 @@ function getRegionState(regionKey, visual) {
 // ── Region — pure SVG shape, no local state ───────────────────────────────────
 
 function Region({ regionKey, visual, onHover, onHoverEnd, children }) {
-  const state    = getRegionState(regionKey, visual);
+  const state = getRegionState(regionKey, visual);
   const canHover = state.status !== "none";
 
   return (
@@ -124,8 +124,8 @@ function Tooltip({ label, state, imgSrc, imgLoading }) {
 
 export default function BodyMap({ visual = {}, sessionId, deviceId }) {
   // Which region is currently hovered: { key, state } or null
-  const [active,     setActive]     = useState(null);
-  const [imgSrc,     setImgSrc]     = useState(null);
+  const [active, setActive] = useState(null);
+  const [imgSrc, setImgSrc] = useState(null);
   const [imgLoading, setImgLoading] = useState(false);
 
   // Cache of imageId → blob URL so each image is fetched at most once.
@@ -191,9 +191,17 @@ export default function BodyMap({ visual = {}, sessionId, deviceId }) {
         className="w-full max-w-[280px]"
         xmlns="http://www.w3.org/2000/svg"
       >
+        <defs>
+          <mask id="headMask">
+            <rect width="100%" height="100%" fill="white" />
+            <ellipse cx="100" cy="32" rx="18" ry="14" fill="black" />
+          </mask>
+        </defs>
+
         <Region {...r("head")}>
-          <ellipse cx="100" cy="30" rx="28" ry="20" />
+          <ellipse cx="100" cy="30" rx="28" ry="20" mask="url(#headMask)" />
         </Region>
+
         <Region {...r("face")}>
           <ellipse cx="100" cy="32" rx="18" ry="14" />
         </Region>
@@ -233,13 +241,13 @@ export default function BodyMap({ visual = {}, sessionId, deviceId }) {
           <text x="100" y="34">face</text>
           <text x="100" y="61">neck</text>
           <text x="100" y="115">torso</text>
-          <text x="50"  y="108">arm R</text>
+          <text x="50" y="108">arm R</text>
           <text x="150" y="108">arm L</text>
-          <text x="50"  y="160">hand R</text>
+          <text x="50" y="160">hand R</text>
           <text x="150" y="160">hand L</text>
-          <text x="83"  y="213">leg R</text>
+          <text x="83" y="213">leg R</text>
           <text x="117" y="213">leg L</text>
-          <text x="83"  y="270">foot R</text>
+          <text x="83" y="270">foot R</text>
           <text x="117" y="270">foot L</text>
         </g>
       </svg>
