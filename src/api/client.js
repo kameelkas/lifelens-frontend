@@ -67,6 +67,57 @@ export function fetchInterventions(sessionId) {
   return request(`/sessions/${sessionId}/interventions`, { headers: authHeaders() });
 }
 
-export function fetchInjuries(sessionId) {
-  return request(`/sessions/${sessionId}/injuries`, { headers: authHeaders() });
+export function fetchVisual(sessionId, deviceId) {
+  return request(`/sessions/${sessionId}/visual?device_id=${deviceId}`, { headers: authHeaders() });
+}
+
+// ==========================
+// IMAGES
+// ==========================
+
+/**
+ * Fetch raw encrypted bytes for an image.
+ * The frontend renders these as pixel noise (anonymized view).
+ */
+export async function fetchImageEncrypted(sessionId, imageId, deviceId) {
+  const res = await fetch(
+    `${BASE_URL}/sessions/${sessionId}/images/${imageId}?device_id=${deviceId}`,
+    { headers: authHeaders() }
+  );
+  if (!res.ok) throw new Error(`Image fetch failed: ${res.status}`);
+  return res.arrayBuffer();
+}
+
+/**
+ * Fetch a decrypted image for medical staff (uses Bearer token).
+ * Returns a blob URL ready for use in <img src={...}>.
+ */
+export async function fetchDecryptedImage(sessionId, imageId, deviceId) {
+  const res = await fetch(
+    `${BASE_URL}/sessions/${sessionId}/images/${imageId}/decrypt?device_id=${deviceId}`,
+    { method: "POST", headers: authHeaders() }
+  );
+  if (!res.ok) throw new Error(`Decryption failed: ${res.status}`);
+  const blob = await res.blob();
+  return URL.createObjectURL(blob);
+}
+
+/**
+ * Fetch a decrypted image for the AHS portal (uses AHS password header).
+ * Returns a blob URL ready for use in <img src={...}>.
+ */
+export async function fetchAHSImage(sessionId, imageId, deviceId, ahsPassword) {
+  const res = await fetch(
+    `${BASE_URL}/sessions/${sessionId}/images/${imageId}/decrypt-ahs?device_id=${deviceId}`,
+    {
+      method: "POST",
+      headers: {
+        ...authHeaders(),
+        "AHS-Password": ahsPassword,
+      },
+    }
+  );
+  if (!res.ok) throw new Error(`AHS decryption failed: ${res.status}`);
+  const blob = await res.blob();
+  return URL.createObjectURL(blob);
 }

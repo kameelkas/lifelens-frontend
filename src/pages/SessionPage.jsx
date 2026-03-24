@@ -15,7 +15,7 @@
 
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { fetchMedications, fetchInterventions, fetchInjuries, fetchActiveSession } from "../api/client";
+import { fetchMedications, fetchInterventions, fetchVisual, fetchActiveSession } from "../api/client";
 import useSSE from "../hooks/useSSE";
 import BodyMap from "../components/BodyMap";
 import Timeline from "../components/Timeline";
@@ -24,7 +24,10 @@ export default function SessionPage() {
   const { sessionId } = useParams();
   const navigate = useNavigate();
 
-  const [injuries, setInjuries] = useState([]);
+  // device_id is embedded in session_id: session_{date}_{time}_{device_id}
+  const deviceId = sessionId.split("_").slice(3).join("_");
+
+  const [visual, setVisual] = useState({});
   const [medications, setMedications] = useState([]);
   const [interventions, setInterventions] = useState([]);
   const [isLive, setIsLive] = useState(false);
@@ -39,13 +42,13 @@ export default function SessionPage() {
           fetchActiveSession(),
           fetchMedications(sessionId).catch(() => []),
           fetchInterventions(sessionId).catch(() => []),
-          fetchInjuries(sessionId).catch(() => []),
+          fetchVisual(sessionId, deviceId).catch(() => ({})),
         ]);
 
         setIsLive(active.session_id === sessionId);
         setMedications(meds);
         setInterventions(intervents);
-        setInjuries(injs);
+        setVisual(injs);
       } catch (err) {
         setError(err.message ?? "Failed to load session");
       } finally {
@@ -66,7 +69,7 @@ export default function SessionPage() {
       fetchInterventions(sessionId).then(setInterventions).catch(() => { });
     }
     if (event.data_type === "visual") {
-      fetchInjuries(sessionId).then(setInjuries).catch(() => { });
+      fetchVisual(sessionId, deviceId).then(setVisual).catch(() => { });
     }
     if (event.data_type === "session_end") {
       setIsLive(false);
@@ -124,7 +127,7 @@ export default function SessionPage() {
 
           {/* Body map */}
           <div className="md:w-64 flex-shrink-0">
-            <BodyMap injuries={injuries} />
+            <BodyMap visual={visual} sessionId={sessionId} deviceId={deviceId} />
           </div>
 
           {/* Timeline */}
