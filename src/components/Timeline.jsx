@@ -34,6 +34,12 @@ const EDGE_PAD_PCT = 6;
 /** Number of tick labels on the x-axis */
 const TICK_COUNT = 5;
 
+/** Pixels per minute of session time — keeps a constant x-axis scale */
+const PX_PER_MINUTE = 12;
+
+/** Absolute floor width (px) so short sessions still have a usable chart */
+const MIN_CHART_PX = 600;
+
 // ── Time utilities ────────────────────────────────────────────────────────────
 
 /**
@@ -310,6 +316,14 @@ export default function Timeline({ medications = [], interventions = [], visual 
         };
     }, [eventsByLane]);
 
+    // Minimum chart width so the x-axis never compresses as data grows.
+    // The chart scrolls horizontally when this exceeds the container width.
+    const chartMinWidth = useMemo(() => {
+        if (!hasData) return 0;
+        const rangeMinutes = (maxTime - minTime) / 60;
+        return Math.max(MIN_CHART_PX, Math.ceil(rangeMinutes * PX_PER_MINUTE));
+    }, [hasData, minTime, maxTime]);
+
     // X-axis tick labels (evenly spaced)
     const ticks = useMemo(() => {
         if (!hasData) return [];
@@ -364,69 +378,71 @@ export default function Timeline({ medications = [], interventions = [], visual 
                     <div className="h-8" />
                 </div>
 
-                {/* ── Chart area ────────────────────────────────────────────────── */}
-                <div className="flex flex-col flex-1 min-w-0">
+                {/* ── Chart area — scrolls horizontally when content exceeds container ── */}
+                <div className="flex-1 min-w-0 overflow-x-auto timeline-scroll">
+                    <div className="flex flex-col" style={chartMinWidth ? { minWidth: `${chartMinWidth}px` } : undefined}>
 
-                    {/* Lane rows + cursor overlay */}
-                    <div
-                        ref={chartRef}
-                        className="relative flex flex-col border-l border-white/10 overflow-visible"
-                        onMouseMove={handleMouseMove}
-                        onMouseLeave={handleMouseLeave}
-                    >
-                        {/* Cursor line — spans full height of all lanes */}
-                        {cursorPct !== null && (
-                            <div
-                                className="absolute top-0 bottom-0 w-px bg-blue-400/35 pointer-events-none z-20"
-                                style={{ left: `${cursorPct}%` }}
-                            />
+                        {/* Lane rows + cursor overlay */}
+                        <div
+                            ref={chartRef}
+                            className="relative flex flex-col border-l border-white/10 overflow-visible"
+                            onMouseMove={handleMouseMove}
+                            onMouseLeave={handleMouseLeave}
+                        >
+                            {/* Cursor line — spans full height of all lanes */}
+                            {cursorPct !== null && (
+                                <div
+                                    className="absolute top-0 bottom-0 w-px bg-blue-400/35 pointer-events-none z-20"
+                                    style={{ left: `${cursorPct}%` }}
+                                />
+                            )}
+
+                            {/* Lane rows */}
+                            {LANES.map(({ key }) => (
+                                <LaneRow
+                                    key={key}
+                                    events={eventsByLane[key]}
+                                    laneType={key}
+                                    minTime={minTime}
+                                    maxTime={maxTime}
+                                />
+                            ))}
+                        </div>
+
+                        {/* ── X-axis tick labels ──────────────────────────────────────── */}
+                        {hasData && (
+                            <div className="relative h-7 mt-1">
+                                {ticks.map((tick, i) => (
+                                    <span
+                                        key={i}
+                                        className="absolute -translate-x-1/2 text-xs text-white/25 tabular-nums"
+                                        style={{ left: `${tick.pct}%` }}
+                                    >
+                                        {formatTime(tick.time)}
+                                    </span>
+                                ))}
+
+                                {/* Cursor time label — follows the cursor line */}
+                                {cursorPct !== null && (
+                                    <span
+                                        className="absolute -translate-x-1/2 text-xs text-blue-300/80 tabular-nums
+                                 bg-[#0d1829] px-1 rounded border border-blue-400/30 pointer-events-none z-20"
+                                        style={{ left: `${cursorPct}%` }}
+                                    >
+                                        {formatTime(cursorTime)}
+                                    </span>
+                                )}
+                            </div>
                         )}
 
-                        {/* Lane rows */}
-                        {LANES.map(({ key }) => (
-                            <LaneRow
-                                key={key}
-                                events={eventsByLane[key]}
-                                laneType={key}
-                                minTime={minTime}
-                                maxTime={maxTime}
-                            />
-                        ))}
+                        {/* "Time" axis label */}
+                        {hasData && (
+                            <p className="text-center text-xs text-white/20 uppercase tracking-widest mt-0.5">
+                                Time
+                            </p>
+                        )}
+
                     </div>
-
-                    {/* ── X-axis tick labels ──────────────────────────────────────── */}
-                    {hasData && (
-                        <div className="relative h-7 mt-1">
-                            {ticks.map((tick, i) => (
-                                <span
-                                    key={i}
-                                    className="absolute -translate-x-1/2 text-xs text-white/25 tabular-nums"
-                                    style={{ left: `${tick.pct}%` }}
-                                >
-                                    {formatTime(tick.time)}
-                                </span>
-                            ))}
-
-                            {/* Cursor time label — follows the cursor line */}
-                            {cursorPct !== null && (
-                                <span
-                                    className="absolute -translate-x-1/2 text-xs text-blue-300/80 tabular-nums
-                             bg-[#0d1829] px-1 rounded border border-blue-400/30 pointer-events-none z-20"
-                                    style={{ left: `${cursorPct}%` }}
-                                >
-                                    {formatTime(cursorTime)}
-                                </span>
-                            )}
-                        </div>
-                    )}
-
-                    {/* "Time" axis label */}
-                    {hasData && (
-                        <p className="text-center text-xs text-white/20 uppercase tracking-widest mt-0.5">
-                            Time
-                        </p>
-                    )}
-
                 </div>
             </div>
         </div>
