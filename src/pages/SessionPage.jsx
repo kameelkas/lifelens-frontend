@@ -26,6 +26,7 @@ import BodyMap from "../components/BodyMap";
 import Timeline from "../components/Timeline";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
+import { formatSessionStartedAt } from "../utils/sessionDisplay";
 
 export default function SessionPage() {
   const { sessionId } = useParams();
@@ -118,15 +119,17 @@ export default function SessionPage() {
       <Navbar />
 
       <main className="flex-1 p-6 pb-24 overflow-hidden">
-        <div className="flex items-center justify-between gap-6 mb-6">
-          <div className="flex items-center gap-4 min-w-0">
+        <div className="flex items-start justify-between gap-6 mb-6">
+          <div className="flex min-w-0 flex-col gap-1">
             <Link
               to="/ems"
-              className="text-muted text-base hover:text-ink transition-all ease-in-out underline-offset-4 hover:underline whitespace-nowrap"
+              className="text-muted text-base hover:text-ink transition-all ease-in-out underline-offset-4 hover:underline whitespace-nowrap w-fit"
             >
               ← Sessions
             </Link>
-            <span className="text-muted/80 text-sm truncate">{sessionId}</span>
+            <span className="text-muted/80 text-sm truncate">
+              {formatSessionStartedAt(sessionId)}
+            </span>
           </div>
 
           {isLive && (

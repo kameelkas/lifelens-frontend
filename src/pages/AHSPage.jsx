@@ -18,6 +18,7 @@ import { Link, useParams } from "react-router-dom";
 import { fetchImages, fetchImageEncrypted, fetchAHSImage } from "../api/client";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
+import { formatSessionStartedAt } from "../utils/sessionDisplay";
 
 // Render Fernet-encrypted bytes as pixel noise on a canvas
 // Returns a data URL string
@@ -126,15 +127,17 @@ export default function AHSPage() {
       <Navbar />
 
       <main className="flex-1 h-full max-w-full px-8 py-10 pb-24">
-      <div className="flex items-center gap-4 mb-8 min-w-0">
-            <Link
-              to="/ems"
-              className="text-muted text-base hover:text-ink transition-all ease-in-out underline-offset-4 hover:underline whitespace-nowrap"
-            >
-              ← Sessions
-            </Link>
-            <span className="text-muted/80 text-sm truncate">{sessionId}</span>
-          </div>
+        <div className="mb-8 flex min-w-0 flex-col gap-1">
+          <Link
+            to="/ems"
+            className="text-muted text-base hover:text-ink transition-all ease-in-out underline-offset-4 hover:underline whitespace-nowrap w-fit"
+          >
+            ← Sessions
+          </Link>
+          <span className="text-muted/80 text-sm truncate">
+            {formatSessionStartedAt(sessionId)}
+          </span>
+        </div>
 
         {/* Password gate */}
         <div className="mb-8 min-w-0 max-w-5xl bg-white/75 border border-muted/20 rounded-lg px-4 py-4 shadow-sm sm:px-6 sm:py-5">
