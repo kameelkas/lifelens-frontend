@@ -27,7 +27,7 @@ export default function Navbar() {
           className="flex items-center hover:opacity-90 transition-opacity min-w-0"
         >
           <LogoMark />
-          <span className="ml-3 text-brand-gold text-xl sm:text-2xl font-semibold whitespace-nowrap">
+          <span className="ml-3 text-brand-gold text-2xl font-semibold whitespace-nowrap">
             LifeLens
           </span>
         </Link>
