@@ -122,7 +122,7 @@ export default function SessionPage() {
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-gold opacity-75" />
               <span className="relative inline-flex rounded-full h-2 w-2 bg-brand-gold" />
             </span>
-            <span className="text-brand-gold text-sm font-medium">Live</span>
+            <span className="text-brand-gold text-lg font-bold">Live</span>
           </div>
         )}
       </header>
