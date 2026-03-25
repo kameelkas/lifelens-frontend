@@ -272,7 +272,7 @@ export default function BodyMap({ visual = {}, sessionId, deviceId }) {
           <ellipse cx="117" cy="268" rx="18" ry="10" />
         </Region>
 
-        <g fill="#001B3A" fontSize="7" textAnchor="middle" style={{ pointerEvents: "none" }}>
+        <g fill="#001B3A" fontSize="8" fontWeight="semibold" textAnchor="middle" style={{ pointerEvents: "none" }}>
           <text x="100" y="22">Head</text>
           <text x="100" y="34">Face</text>
           <text x="100" y="61">Neck</text>
