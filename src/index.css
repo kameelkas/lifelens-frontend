@@ -2,6 +2,11 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Increase base font size so text is easier to read across the app. */
+html {
+    font-size: 18px; /* Tailwind text-* classes are rem-based, so this scales globally. */
+}
+
 /* Light-themed scrollbar for the timeline chart area */
 .timeline-scroll::-webkit-scrollbar {
     height: 6px;

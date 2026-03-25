@@ -44,7 +44,7 @@ export default function PortalPickerPage() {
                         <span className="text-ink text-lg font-semibold group-hover:text-brand-gold transition-colors">
                             EMS Portal
                         </span>
-                        <span className="text-muted text-xs text-center leading-relaxed">
+                        <span className="text-muted text-sm text-center leading-relaxed">
                             Live session monitoring, body map, and timeline
                         </span>
                     </button>
@@ -59,7 +59,7 @@ export default function PortalPickerPage() {
                         <span className="text-ink text-lg font-semibold group-hover:text-brand-gold transition-colors">
                             AHS Portal
                         </span>
-                        <span className="text-muted text-xs text-center leading-relaxed">
+                        <span className="text-muted text-sm text-center leading-relaxed">
                             Session image review and decryption
                         </span>
                     </button>

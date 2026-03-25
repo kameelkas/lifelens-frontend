@@ -143,15 +143,15 @@ function MedicationTooltip({ event }) {
     return (
         <>
             <p className="text-ink text-sm font-semibold">{event.medication || "—"}</p>
-            <p className="text-muted text-xs mb-1">{event.start_time}</p>
+            <p className="text-muted text-sm mb-1">{event.start_time}</p>
             {event.dosage && (
-                <p className="text-green-400 text-xs">Dose: {event.dosage}</p>
+                <p className="text-green-400 text-sm">Dose: {event.dosage}</p>
             )}
             {event.route && (
-                <p className="text-green-400 text-xs">Route: {event.route}</p>
+                <p className="text-green-400 text-sm">Route: {event.route}</p>
             )}
             {event.medication_confidence != null && (
-                <p className="text-muted/80 text-xs mt-1">
+                <p className="text-muted/80 text-sm mt-1">
                     Conf: {(event.medication_confidence * 100).toFixed(0)}%
                 </p>
             )}
@@ -176,14 +176,14 @@ function InterventionTooltip({ event }) {
 function InjuryTooltip({ event }) {
     return (
         <>
-            <p className="text-ink text-xs font-semibold capitalize">{event.bodyPart}</p>
-            <p className="text-red-400 text-xs">{event.injuryType}</p>
-            <p className="text-muted text-xs mb-1">
+            <p className="text-ink text-sm font-semibold capitalize">{event.bodyPart}</p>
+            <p className="text-red-400 text-sm">{event.injuryType}</p>
+            <p className="text-muted text-sm mb-1">
                 {/* Show only HH:MM:SS from pred_time */}
                 {event.pred_time?.split(" ")[1] ?? ""}
             </p>
             {event.accuracy != null && (
-                <p className="text-muted/80 text-xs">
+                <p className="text-muted/80 text-sm">
                     Conf: {(event.accuracy * 100).toFixed(0)}%
                 </p>
             )}
@@ -461,7 +461,7 @@ export default function Timeline({ medications = [], interventions = [], visual 
                             key={key}
                             className="flex items-center border-b border-muted/40 pr-3" style={{ height: "200px" }}
                         >
-                            <span className="text-muted/90 text-xs uppercase tracking-wider leading-snug">
+                            <span className="text-muted/90 text-sm uppercase tracking-wider leading-snug">
                                 {label}
                             </span>
                         </div>
@@ -508,7 +508,7 @@ export default function Timeline({ medications = [], interventions = [], visual 
                                 {ticks.map((tick, i) => (
                                     <span
                                         key={i}
-                                        className="absolute -translate-x-1/2 text-xs text-muted/80 tabular-nums"
+                                        className="absolute -translate-x-1/2 text-sm text-muted/80 tabular-nums"
                                         style={{ left: `${tick.pct}%` }}
                                     >
                                         {formatTime(tick.time)}
@@ -518,7 +518,7 @@ export default function Timeline({ medications = [], interventions = [], visual 
                                 {/* Cursor time label — follows the cursor line */}
                                 {cursorPct !== null && (
                                     <span
-                                        className="absolute -translate-x-1/2 text-xs text-ink tabular-nums
+                                        className="absolute -translate-x-1/2 text-sm text-ink tabular-nums
                                  bg-white px-1 rounded border border-blue-400/40 pointer-events-none z-20"
                                         style={{ left: `${cursorPct}%` }}
                                     >
@@ -532,7 +532,7 @@ export default function Timeline({ medications = [], interventions = [], visual 
 
                     {/* "Time" axis label (kept outside the scroller so it doesn't move) */}
                     {hasData && (
-                        <p className="text-center text-xs text-muted/80 uppercase tracking-widest mt-0.5">
+                        <p className="text-center text-sm text-muted/80 uppercase tracking-widest mt-0.5">
                             Time
                         </p>
                     )}

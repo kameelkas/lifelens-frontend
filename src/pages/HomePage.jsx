@@ -132,7 +132,7 @@ export default function HomePage({ portalName = "LifeLens", sessionBasePath = "/
                   <p className="text-ink text-sm font-medium">
                     {session.session_id}
                   </p>
-                  <p className="text-muted text-xs mt-1">
+                  <p className="text-muted text-sm mt-1">
                     {formatDate(session.created_at)}
                   </p>
                 </div>

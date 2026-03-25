@@ -75,15 +75,15 @@ function ImageCard({ imageId, sessionId, deviceId, ahsPassword }) {
       <div className="aspect-square bg-app-bg/60 flex items-center justify-center">
         {src
           ? <img src={src} alt={imageId} className="w-full h-full object-contain" />
-          : <p className="text-muted text-xs">Loading...</p>
+          : <p className="text-muted text-sm">Loading...</p>
         }
       </div>
       <div className="p-2">
-        <p className="text-muted text-xs truncate">{imageId}</p>
-        {decrypting && <p className="text-brand-gold text-xs mt-1">Decrypting...</p>}
-        {error && <p className="text-red-400 text-xs mt-1">{error}</p>}
+        <p className="text-muted text-sm truncate">{imageId}</p>
+        {decrypting && <p className="text-brand-gold text-sm mt-1">Decrypting...</p>}
+        {error && <p className="text-red-400 text-sm mt-1">{error}</p>}
         {decryptedSrc && !error && (
-          <p className="text-green-400 text-xs mt-1">Decrypted</p>
+          <p className="text-green-400 text-sm mt-1">Decrypted</p>
         )}
       </div>
     </div>

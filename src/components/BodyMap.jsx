@@ -136,7 +136,7 @@ function PortalTooltip({ anchorRect, label, state, imgSrc, imgLoading }) {
       <p className="text-ink text-sm font-semibold capitalize mb-2">{label}</p>
 
       {state.status === "healthy" && (
-        <p className="text-green-400 text-xs mb-3">No injuries detected</p>
+        <p className="text-green-400 text-sm mb-3">No injuries detected</p>
       )}
 
       {state.status === "injured" && (
@@ -145,14 +145,14 @@ function PortalTooltip({ anchorRect, label, state, imgSrc, imgLoading }) {
             .sort((a, b) => b.accuracy - a.accuracy)
             .map((inj) => (
               <li key={inj.type} className="flex items-center justify-between">
-                <span className="text-red-700 text-xs">{inj.type}</span>
-                <span className="text-muted/80 text-xs">{(inj.accuracy * 100).toFixed(0)}%</span>
+                <span className="text-red-700 text-sm">{inj.type}</span>
+                <span className="text-muted/80 text-sm">{(inj.accuracy * 100).toFixed(0)}%</span>
               </li>
             ))}
         </ul>
       )}
 
-      {imgLoading && <p className="text-muted/80 text-xs">Loading image...</p>}
+      {imgLoading && <p className="text-muted/80 text-sm">Loading image...</p>}
       {imgSrc && (
         <img src={imgSrc} alt={label} className="w-full rounded object-contain max-h-48" />
       )}
@@ -207,7 +207,7 @@ export default function BodyMap({ visual = {}, sessionId, deviceId }) {
       <h2 className="text-muted text-sm uppercase tracking-widest">Body Map</h2>
 
       {/* Legend */}
-      <div className="flex items-center gap-3 text-xs text-muted flex-wrap justify-center mb-1">
+      <div className="flex items-center gap-3 text-sm text-muted flex-wrap justify-center mb-1">
         <span className="flex items-center gap-1">
           <span className="inline-block w-3 h-3 rounded-full" style={{ background: GREY_COLOR }} />
           No data
