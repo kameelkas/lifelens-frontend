@@ -117,7 +117,7 @@ export default function SessionPage() {
     <div className="h-[100%] bg-app-bg text-ink flex flex-col">
       <Navbar />
 
-      <main className="flex-1 px-6 py-6 pb-24 overflow-hidden">
+      <main className="flex-1 p-6 pb-24 overflow-hidden">
         <div className="flex items-center justify-between gap-6 mb-6">
           <div className="flex items-center gap-4 min-w-0">
             <Link

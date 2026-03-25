@@ -20,7 +20,7 @@ export default function Navbar({ logoSrc, brandTo = "/" }) {
   const { token, user, logout } = useAuth();
 
   return (
-    <header className="sticky top-0 z-50 bg-app-bg/90 backdrop-blur border-b border-muted/50 sm:px-8 px-2 py-1">
+    <header className="sticky top-0 z-50 bg-transparent backdrop-blur-3xl sm:px-8 px-2 py-1">
       <div className="w-full flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
         <Link
           to={brandTo}
@@ -36,12 +36,12 @@ export default function Navbar({ logoSrc, brandTo = "/" }) {
           <div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-4">
             <span className="text-muted text-sm sm:text-base whitespace-nowrap capitalize">
               <span className="hidden sm:inline">User: </span>
-              <b className="font-semibold">{user}</b>
+              <b className="font-semibold text-lg">{user}</b>
             </span>
             <button
               type="button"
               onClick={logout}
-              className="text-muted text-sm sm:text-base hover:text-brand-gold transition-all duration-300 ease-in-out hover:underline underline-offset-4 whitespace-nowrap"
+              className="text-muted text-lg hover:text-brand-gold transition-all duration-300 ease-in-out hover:underline underline-offset-4 whitespace-nowrap"
             >
               Sign out
             </button>

@@ -3,7 +3,7 @@ export default function Footer({
   logoCount = 3,
 }) {
   return (
-    <footer className="fixed bottom-0 inset-x-0 z-40 bg-app-bg/90 backdrop-blur border-t border-muted/50 px-2 sm:px-8 py-3">
+    <footer className="fixed bottom-0 inset-x-0 z-40 bg-transparent backdrop-blur-3xl px-2 sm:px-8 py-3">
       <div className="w-full flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-6">
         <p className="text-muted text-xs sm:text-sm">
           © {year} LifeLens. All rights reserved.

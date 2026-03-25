@@ -343,7 +343,7 @@ function LaneRow({ events, laneType, minTime, maxTime }) {
     );
 
     return (
-        <div className="relative border-b border-muted/20 overflow-visible" style={{ height: "200px" }}>
+        <div className="relative border-b border-muted/20 overflow-visible bg-[#FFEECB]" style={{ height: "200px" }}>
             <EkgBackground id={laneType} />
 
             {/* Centre guide line */}
@@ -458,7 +458,7 @@ export default function Timeline({ medications = [], interventions = [], visual 
                             key={key}
                             className="flex items-center border-b border-muted/40 pr-3" style={{ height: "200px" }}
                         >
-                            <span className="text-muted text-sm tracking-wider">
+                            <span className="text-muted text-base font-semibold tracking-wider">
                                 {label}
                             </span>
                         </div>
@@ -529,7 +529,7 @@ export default function Timeline({ medications = [], interventions = [], visual 
 
                     {/* "Time" axis label (kept outside the scroller so it doesn't move) */}
                     {hasData && (
-                        <p className="text-center text-base text-muted uppercase tracking-widest mt-0.5">
+                        <p className="text-center text-base text-muted uppercase font-semibold tracking-widest mt-0.5">
                             Time
                         </p>
                     )}

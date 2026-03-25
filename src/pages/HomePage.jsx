@@ -72,16 +72,14 @@ export default function HomePage({ portalName = "LifeLens", sessionBasePath = "/
     <div className="min-h-screen bg-app-bg text-ink flex flex-col">
       <Navbar />
 
-      <main className="flex-1 max-w-6xl px-8 py-10 pb-24">
-        <div className="flex items-center gap-4 mb-8">
-          <button
-            onClick={() => navigate("/")}
-            className="text-muted text-base hover:text-ink transition-all ease-in-out underline-offset-4 hover:underline"
-          >
-            ← Portals
-          </button>
-          <h1 className="text-brand-gold text-xl font-semibold">{portalName}</h1>
-        </div>
+      <main className="flex-1 max-w-full px-8 py-10 pb-24">
+        <button
+          onClick={() => navigate("/")}
+          className="text-muted text-base md:text-lg hover:text-ink transition-all ease-in-out underline-offset-4 hover:underline"
+        >
+          ← Portals
+        </button>
+        <h1 className="text-brand-gold text-2xl md:text-4xl text-center font-semibold">{portalName}</h1>
 
         {activeSession && (
           <div
@@ -102,7 +100,7 @@ export default function HomePage({ portalName = "LifeLens", sessionBasePath = "/
           </div>
         )}
 
-        <h2 className="text-muted text-sm uppercase tracking-widest mb-4">
+        <h2 className="text-muted text-lg uppercase tracking-widest mb-4">
           Recent Sessions
         </h2>
 
