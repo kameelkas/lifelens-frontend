@@ -58,6 +58,16 @@ export default function HomePage({ portalName = "LifeLens", sessionBasePath = "/
     return new Date(dateStr).toLocaleString();
   }
 
+  function formatDay(dateStr) {
+    if (!dateStr) return "—";
+    return new Date(dateStr).toLocaleDateString();
+  }
+
+  function formatTime(dateStr) {
+    if (!dateStr) return "—";
+    return new Date(dateStr).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  }
+
   return (
     <div className="min-h-screen bg-app-bg text-ink flex flex-col">
       <Navbar />
@@ -109,23 +119,40 @@ export default function HomePage({ portalName = "LifeLens", sessionBasePath = "/
         )}
 
         {!loading && !error && sessions.length > 0 && (
-          <ul className="flex flex-col gap-2">
+          <ul className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
             {sessions.map((session) => (
               <li
                 key={session.session_id}
                 onClick={() => navigate(`${sessionBasePath}/${session.session_id}`)}
-                className="flex items-center justify-between bg-white/75 border border-muted/20
-                           rounded-lg px-6 py-4 cursor-pointer hover:bg-white transition-colors"
+                className="group bg-white/80 border border-muted/20 rounded-xl p-5 cursor-pointer
+                           hover:bg-white hover:border-brand-gold/40 transition-all shadow-sm hover:shadow
+                           min-h-[140px] flex flex-col justify-between"
               >
-                <div>
-                  <p className="text-ink text-sm font-medium">
-                    {session.session_id}
+                <div className="flex items-start justify-between gap-4">
+                  <div className="min-w-0">
+                    <p className="text-muted text-sm uppercase tracking-widest">Date</p>
+                    <p className="text-ink text-lg font-semibold mt-1">
+                      {formatDay(session.created_at)}
+                    </p>
+                  </div>
+
+                  <span className="text-muted text-sm group-hover:text-brand-gold transition-colors">
+                    View →
+                  </span>
+                </div>
+
+                <div className="mt-4">
+                  <p className="text-muted text-sm uppercase tracking-widest">
+                    Session Started:
                   </p>
-                  <p className="text-muted text-sm mt-1">
-                    {formatDate(session.created_at)}
+                  <p className="text-ink text-base font-medium mt-1">
+                    {formatTime(session.created_at)}
+                  </p>
+
+                  <p className="text-muted text-xs mt-3 truncate">
+                    ID: {session.session_id}
                   </p>
                 </div>
-                <span className="text-muted text-sm">→</span>
               </li>
             ))}
           </ul>
