@@ -142,17 +142,17 @@ function EkgBackground({ id }) {
 function MedicationTooltip({ event }) {
     return (
         <>
-            <p className="text-ink text-sm font-semibold">{event.medication || "—"}</p>
-            <p className="text-muted text-sm mb-1">{event.start_time}</p>
+            <p className="text-ink text-base font-bold leading-tight capitalize">{event.medication || "—"}</p>
+            <p className="text-muted text-sm mb-1">Administered at: <b>{event.start_time}</b></p>
             {event.dosage && (
-                <p className="text-green-400 text-sm">Dose: {event.dosage}</p>
+                <p className="text-muted text-sm break-words">Dose: <b>{event.dosage}</b></p>
             )}
             {event.route && (
-                <p className="text-green-400 text-sm">Route: {event.route}</p>
+                <p className="text-muted text-sm break-words capitalize">Route: <b>{event.route}</b></p>
             )}
             {event.medication_confidence != null && (
-                <p className="text-muted/80 text-sm mt-1">
-                    Conf: {(event.medication_confidence * 100).toFixed(0)}%
+                <p className="text-muted  text-sm mt-1">
+                    Confidence: <b>{(event.medication_confidence * 100).toFixed(0)}%</b>
                 </p>
             )}
         </>
@@ -162,10 +162,10 @@ function MedicationTooltip({ event }) {
 function InterventionTooltip({ event }) {
     return (
         <>
-            <p className="text-ink text-sm font-semibold">{event.event_category || "—"}</p>
-            <p className="text-muted text-sm mb-1">{event.start_time}</p>
+            <p className="text-ink text-base font-bold leading-tight">{event.event_category || "—"}</p>
+            <p className="text-muted text-sm mb-1">Intervention began at: <b>{event.start_time}</b></p>
             {event.full_text && (
-                <p className="text-muted text-sm leading-snug">
+                <p className="text-muted text-sm leading-snug max-w-[300px]">
                     {event.full_text}
                 </p>
             )}
@@ -176,15 +176,12 @@ function InterventionTooltip({ event }) {
 function InjuryTooltip({ event }) {
     return (
         <>
-            <p className="text-ink text-sm font-semibold capitalize">{event.bodyPart}</p>
-            <p className="text-red-400 text-sm">{event.injuryType}</p>
-            <p className="text-muted text-sm mb-1">
-                {/* Show only HH:MM:SS from pred_time */}
-                {event.pred_time?.split(" ")[1] ?? ""}
-            </p>
+            <p className="text-ink text-base font-bold leading-tight capitalize">{event.bodyPart}</p>
+            <p className="text-muted text-sm break-words">Injury Type: <b>{event.injuryType}</b></p>
+            <p className="text-muted text-sm mb-1">Injury First Detected At: <b>{event.pred_time?.split(" ")[1] ?? ""}</b></p>
             {event.accuracy != null && (
-                <p className="text-muted/80 text-sm">
-                    Conf: {(event.accuracy * 100).toFixed(0)}%
+                <p className="text-muted text-sm">
+                    Confidence: <b>{(event.accuracy * 100).toFixed(0)}%</b>
                 </p>
             )}
         </>
@@ -220,7 +217,7 @@ function PortalTooltip({ dotRect, laneType, event }) {
     return createPortal(
         <div
             ref={tooltipRef}
-            className="fixed z-[9999] bg-white border border-muted/20 rounded-lg p-3 shadow-2xl w-72 max-w-[90vw]"
+            className="fixed z-[9999] bg-white border border-muted/20 rounded-lg p-3 shadow-2xl w-fit max-w-[90vw] break-words"
             style={{
                 pointerEvents: "none",
                 top: pos ? `${pos.top}px` : "-9999px",
@@ -264,7 +261,7 @@ function Dot({ event, pct, topPct = 50, laneType }) {
         >
             <div
                 ref={dotRef}
-                className="w-4 h-4 rounded-full bg-green-600 border-2 border-green-200 shadow-md
+                className="w-4 h-4 rounded-full bg-green-700 border-2 border-green-500 shadow-md
                    cursor-pointer hover:scale-150 transition-transform duration-150 z-10 relative"
                 onMouseEnter={handleEnter}
                 onMouseLeave={handleLeave}
