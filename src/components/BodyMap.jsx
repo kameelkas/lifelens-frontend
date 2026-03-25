@@ -204,7 +204,7 @@ export default function BodyMap({ visual = {}, sessionId, deviceId }) {
 
   return (
     <div className="flex flex-col items-center gap-2 w-full">
-      <h2 className="text-muted text-sm uppercase tracking-widest">Body Map</h2>
+      <h2 className="text-muted text-lg font-bold uppercase tracking-widest pb-4">Body Map</h2>
 
       {/* Legend */}
       <div className="flex items-center gap-3 text-sm text-muted flex-wrap justify-center mb-1">

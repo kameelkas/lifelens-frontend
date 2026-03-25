@@ -446,7 +446,7 @@ export default function Timeline({ medications = [], interventions = [], visual 
 
     return (
         <div className="flex flex-col gap-1 w-full overflow-hidden">
-            <h2 className="text-muted text-center text-sm uppercase tracking-widest mb-3">Timeline</h2>
+            <h2 className="text-muted text-center text-lg font-bold uppercase tracking-widest mb-3">Timeline</h2>
 
             {!hasData && (
                 <p className="text-muted text-center text-sm">No timeline data yet.</p>
@@ -461,7 +461,7 @@ export default function Timeline({ medications = [], interventions = [], visual 
                             key={key}
                             className="flex items-center border-b border-muted/40 pr-3" style={{ height: "200px" }}
                         >
-                            <span className="text-muted/90 text-sm uppercase tracking-wider leading-snug">
+                            <span className="text-muted text-sm tracking-wider">
                                 {label}
                             </span>
                         </div>
