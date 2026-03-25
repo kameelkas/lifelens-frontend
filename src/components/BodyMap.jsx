@@ -55,8 +55,9 @@ function getRegionState(regionKey, visual) {
     return {
       status: "healthy",
       fill: HEALTHY_COLOR,
-      opacity: 1,
+      opacity: Math.max(MIN_OPACITY, noInjuryEntry?.[1]?.accuracy ?? MIN_OPACITY),
       allInjuries: [],
+      confidence: noInjuryEntry?.[1]?.accuracy ?? null,
       previewImageId: noInjuryEntry?.[1]?.image_id ?? null,
     };
   }
@@ -67,6 +68,7 @@ function getRegionState(regionKey, visual) {
     fill: INJURED_COLOR,
     opacity: Math.max(MIN_OPACITY, best.accuracy ?? MIN_OPACITY),
     allInjuries: realInjuries,
+    confidence: best.accuracy ?? null,
     previewImageId: best.image_id ?? null,
   };
 }
@@ -136,20 +138,33 @@ function PortalTooltip({ anchorRect, label, state, imgSrc, imgLoading }) {
       <p className="text-ink text-sm font-semibold capitalize mb-2">{label}</p>
 
       {state.status === "healthy" && (
-        <p className="text-green-400 text-sm mb-3">No injuries detected</p>
+        <p className="text-[#335A4C] text-sm mb-3">
+          No injuries detected
+          {typeof state.confidence === "number" && (
+            <span className="text-muted text-sm ml-2">
+              ({(state.confidence * 100).toFixed(0)}%)
+            </span>
+          )}
+        </p>
       )}
 
       {state.status === "injured" && (
-        <ul className="flex flex-col gap-1 mb-3">
-          {[...state.allInjuries]
-            .sort((a, b) => b.accuracy - a.accuracy)
-            .map((inj) => (
-              <li key={inj.type} className="flex items-center justify-between">
-                <span className="text-red-700 text-sm">{inj.type}</span>
-                <span className="text-muted/80 text-sm">{(inj.accuracy * 100).toFixed(0)}%</span>
-              </li>
-            ))}
-        </ul>
+        <p className="text-muted text-sm mb-3">
+          Injury Detected:{" "}
+          <span className="capitalize text-[#8B322C]">
+            {state.allInjuries?.[0]?.type ?? "Unknown"}
+          </span>{" "}
+          {typeof state.confidence === "number" && (
+            <span className="text-muted text-sm">
+              ({(state.confidence * 100).toFixed(0)}%)
+            </span>
+          )}
+          {Array.isArray(state.allInjuries) && state.allInjuries.length > 1 && (
+            <span className="text-muted text-sm ml-2">
+              +{state.allInjuries.length - 1} more
+            </span>
+          )}
+        </p>
       )}
 
       {imgLoading && <p className="text-muted/80 text-sm">Loading image...</p>}
@@ -220,6 +235,16 @@ export default function BodyMap({ visual = {}, sessionId, deviceId }) {
           <span className="inline-block w-3 h-3 rounded-full bg-[#8B322C]" />
           Injury
         </span>
+      </div>
+
+      {/* Confidence guide */}
+      <div className="w-full max-w-[200px] flex flex-col items-center gap-1">
+        <p className="text-muted text-xs uppercase tracking-widest">Confidence</p>
+        <div className="w-full h-2 rounded-full border border-muted bg-gradient-to-r from-muted/5 via-muted/50 to-muted" />
+        <div className="w-full flex items-center justify-between text-muted text-xs">
+          <span>Lower</span>
+          <span>Higher</span>
+        </div>
       </div>
 
       <svg

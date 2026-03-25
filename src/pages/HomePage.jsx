@@ -76,7 +76,7 @@ export default function HomePage({ portalName = "LifeLens", sessionBasePath = "/
         <div className="flex items-center gap-4 mb-8">
           <button
             onClick={() => navigate("/")}
-            className="text-muted text-sm hover:text-ink transition-colors"
+            className="text-muted text-base hover:text-ink transition-all ease-in-out underline-offset-4 hover:underline"
           >
             ← Portals
           </button>

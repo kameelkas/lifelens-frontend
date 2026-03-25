@@ -122,7 +122,7 @@ export default function SessionPage() {
           <div className="flex items-center gap-4 min-w-0">
             <Link
               to="/ems"
-              className="text-muted text-sm hover:text-ink transition-colors whitespace-nowrap"
+              className="text-muted text-base hover:text-ink transition-all ease-in-out underline-offset-4 hover:underline whitespace-nowrap"
             >
               ← Sessions
             </Link>

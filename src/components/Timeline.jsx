@@ -529,7 +529,7 @@ export default function Timeline({ medications = [], interventions = [], visual 
 
                     {/* "Time" axis label (kept outside the scroller so it doesn't move) */}
                     {hasData && (
-                        <p className="text-center text-sm text-muted/80 uppercase tracking-widest mt-0.5">
+                        <p className="text-center text-base text-muted uppercase tracking-widest mt-0.5">
                             Time
                         </p>
                     )}
