@@ -1,6 +1,6 @@
 export default function Footer({
   year = new Date().getFullYear(),
-  logoCount = 3,
+  logoCount = 2,
 }) {
   return (
     <footer className="fixed bottom-0 inset-x-0 z-40 bg-transparent backdrop-blur-3xl px-2 sm:px-8 py-3">

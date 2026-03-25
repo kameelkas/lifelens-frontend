@@ -81,7 +81,7 @@ function ImageCard({ imageId, sessionId, deviceId, ahsPassword }) {
         }
       </div>
       <div className="p-2">
-        <p className="text-muted text-sm truncate">{imageId}</p>
+        <p className="text-muted text-lg truncate">{imageId}</p>
         {decrypting && <p className="text-brand-gold text-sm mt-1">Decrypting...</p>}
         {error && <p className="text-red-400 text-sm mt-1">{error}</p>}
         {decryptedSrc && !error && (

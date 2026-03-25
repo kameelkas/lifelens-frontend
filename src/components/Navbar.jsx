@@ -16,17 +16,17 @@ function LogoMark({ logoSrc }) {
   );
 }
 
-export default function Navbar({ logoSrc, brandTo = "/" }) {
+export default function Navbar() {
   const { token, user, logout } = useAuth();
 
   return (
     <header className="sticky top-0 z-50 bg-transparent backdrop-blur-3xl sm:px-8 px-2 py-1">
       <div className="w-full flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
         <Link
-          to={brandTo}
+          to='/'
           className="flex items-center hover:opacity-90 transition-opacity min-w-0"
         >
-          <LogoMark logoSrc={logoSrc} />
+          <LogoMark />
           <span className="ml-3 text-brand-gold text-xl sm:text-2xl font-semibold whitespace-nowrap">
             LifeLens
           </span>
