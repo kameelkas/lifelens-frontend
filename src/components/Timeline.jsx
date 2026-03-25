@@ -41,6 +41,16 @@ const PX_PER_MINUTE = 12;
 /** Absolute floor width (px) so short sessions still have a usable chart */
 const MIN_CHART_PX = 600;
 
+/**
+ * Per-lane dot colors (from project palettes — cool / natural, not the vibrant gold accent).
+ * fill: main dot; border: slightly lighter ring for contrast on cream lane backgrounds.
+ */
+const LANE_DOT_COLORS = {
+    medication: { fill: "#34466A", border: "#5A6B88" },
+    intervention: { fill: "#877555", border: "#A89678" },
+    injury: { fill: "#693740", border: "#8B5C62" },
+};
+
 // ── Time utilities ────────────────────────────────────────────────────────────
 
 /**
@@ -239,7 +249,7 @@ function PortalTooltip({ dotRect, laneType, event }) {
  * On hover, a portal-based tooltip is rendered at document.body level so it
  * escapes any overflow clipping from the scrollable chart container.
  */
-function Dot({ event, pct, topPct = 50, laneType }) {
+function Dot({ event, pct, topPct = 50, laneType, dotColors }) {
     const [hovered, setHovered] = useState(false);
     const dotRef = useRef(null);
     const [dotRect, setDotRect] = useState(null);
@@ -261,8 +271,12 @@ function Dot({ event, pct, topPct = 50, laneType }) {
         >
             <div
                 ref={dotRef}
-                className="w-4 h-4 rounded-full bg-green-700 border-2 border-green-500 shadow-md
+                className="w-4 h-4 rounded-full border-2 shadow-md
                    cursor-pointer hover:scale-150 transition-transform duration-150 z-10 relative"
+                style={{
+                    backgroundColor: dotColors.fill,
+                    borderColor: dotColors.border,
+                }}
                 onMouseEnter={handleEnter}
                 onMouseLeave={handleLeave}
             />
@@ -337,6 +351,7 @@ function assignVerticalOffsets(events, minTime, maxTime) {
  * separate fixed column so they stay aligned during x-axis interaction).
  */
 function LaneRow({ events, laneType, minTime, maxTime }) {
+    const dotColors = LANE_DOT_COLORS[laneType];
     const positioned = useMemo(
         () => assignVerticalOffsets(events, minTime, maxTime),
         [events, minTime, maxTime],
@@ -357,6 +372,7 @@ function LaneRow({ events, laneType, minTime, maxTime }) {
                     pct={timeToPct(event.time, minTime, maxTime)}
                     topPct={topPct}
                     laneType={laneType}
+                    dotColors={dotColors}
                 />
             ))}
 
