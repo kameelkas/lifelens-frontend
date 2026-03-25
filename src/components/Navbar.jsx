@@ -20,8 +20,8 @@ export default function Navbar({ logoSrc, brandTo = "/" }) {
   const { token, user, logout } = useAuth();
 
   return (
-    <header className="sticky top-0 z-50 bg-app-bg/90 backdrop-blur border-b border-muted/50 px-4 sm:px-8 py-2">
-      <div className="mx-auto w-full max-w-6xl flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+    <header className="sticky top-0 z-50 bg-app-bg/90 backdrop-blur border-b border-muted/50 sm:px-8 px-2 py-1">
+      <div className="w-full flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
         <Link
           to={brandTo}
           className="flex items-center hover:opacity-90 transition-opacity min-w-0"
