@@ -26,8 +26,8 @@ import { createPortal } from "react-dom";
 import { fetchDecryptedImage } from "../api/client";
 
 const GREY_COLOR = "#6b7280";
-const HEALTHY_COLOR = "#22c55e";
-const INJURED_COLOR = "#ef4444";
+const HEALTHY_COLOR = "#335A4C";
+const INJURED_COLOR = "#8B322C";
 const MIN_OPACITY = 0.3;
 
 // ── State derivation ──────────────────────────────────────────────────────────
@@ -145,7 +145,7 @@ function PortalTooltip({ anchorRect, label, state, imgSrc, imgLoading }) {
             .sort((a, b) => b.accuracy - a.accuracy)
             .map((inj) => (
               <li key={inj.type} className="flex items-center justify-between">
-                <span className="text-red-400 text-xs">{inj.type}</span>
+                <span className="text-red-700 text-xs">{inj.type}</span>
                 <span className="text-muted/80 text-xs">{(inj.accuracy * 100).toFixed(0)}%</span>
               </li>
             ))}
@@ -213,11 +213,11 @@ export default function BodyMap({ visual = {}, sessionId, deviceId }) {
           No data
         </span>
         <span className="flex items-center gap-1">
-          <span className="inline-block w-3 h-3 rounded-full bg-green-500" />
+          <span className="inline-block w-3 h-3 rounded-full bg-[#335A4C]" />
           Healthy
         </span>
         <span className="flex items-center gap-1">
-          <span className="inline-block w-3 h-3 rounded-full bg-red-500" />
+          <span className="inline-block w-3 h-3 rounded-full bg-[#8B322C]" />
           Injury
         </span>
       </div>

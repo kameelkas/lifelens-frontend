@@ -114,29 +114,28 @@ function prepareInterventions(interventions) {
         .filter((e) => e.time !== null);
 }
 
-// ── EKG background ─────────────────────────────────────────────────────────────
-function EkgBackground() {
+// ── EKG graph-paper background ─────────────────────────────────────────────
+// Use a simple repeating background so it always fills the full chart width
+// (no "cutoff" at the right edge), and keep it subtle but readable.
+function EkgBackground({ id }) {
     return (
-        <div
-            className="absolute inset-0 pointer-events-none"
-            style={{
-                backgroundImage: `
-                    linear-gradient(to right, rgba(0,27,58,0.05) 1px, transparent 1px),
-                    linear-gradient(to bottom, rgba(0,27,58,0.05) 1px, transparent 1px),
-                    linear-gradient(to right, rgba(0,27,58,0.1) 1px, transparent 1px),
-                    linear-gradient(to bottom, rgba(0,27,58,0.1) 1px, transparent 1px)
-                `,
-                backgroundSize: `
-                    10px 10px,
-                    10px 10px,
-                    50px 50px,
-                    50px 50px
-                `,
-            }}
-        />
+        <svg
+            className="absolute inset-0 w-full h-full pointer-events-none z-0"
+            xmlns="http://www.w3.org/2000/svg"
+        >
+            <defs>
+                <pattern id={`minor-${id}`} width="10" height="10" patternUnits="userSpaceOnUse">
+                    <path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(0,27,58,0.12)" strokeWidth="0.75"/>
+                </pattern>
+                <pattern id={`major-${id}`} width="50" height="50" patternUnits="userSpaceOnUse">
+                    <rect width="50" height="50" fill={`url(#minor-${id})`}/>
+                    <path d="M 50 0 L 0 0 0 50" fill="none" stroke="rgba(0,27,58,0.25)" strokeWidth="1"/>
+                </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill={`url(#major-${id})`}/>
+        </svg>
     );
 }
-
 
 // ── Tooltips ──────────────────────────────────────────────────────────────────
 
@@ -265,7 +264,7 @@ function Dot({ event, pct, topPct = 50, laneType }) {
         >
             <div
                 ref={dotRef}
-                className="w-3 h-3 rounded-full bg-green-400 border-2 border-green-200 shadow-md
+                className="w-4 h-4 rounded-full bg-green-600 border-2 border-green-200 shadow-md
                    cursor-pointer hover:scale-150 transition-transform duration-150 z-10 relative"
                 onMouseEnter={handleEnter}
                 onMouseLeave={handleLeave}
@@ -347,12 +346,11 @@ function LaneRow({ events, laneType, minTime, maxTime }) {
     );
 
     return (
-        <div className="relative h-52 border-b border-muted/10 overflow-visible">
-            {/* Faint EKG pattern */}
-            <EkgBackground />
+        <div className="relative border-b border-muted/20 overflow-visible" style={{ height: "200px" }}>
+            <EkgBackground id={laneType} />
 
             {/* Centre guide line */}
-            <div className="absolute inset-x-0 top-1/2 h-px bg-muted/15 pointer-events-none" />
+            <div className="absolute inset-x-0 top-1/2 h-px bg-ink/25 pointer-events-none z-10" />
 
             {/* Event dots */}
             {positioned.map(({ event, topPct }) => (
@@ -366,8 +364,8 @@ function LaneRow({ events, laneType, minTime, maxTime }) {
             ))}
 
             {events.length === 0 && (
-                <span className="absolute inset-0 flex items-center justify-center
-                         text-muted/60 text-xs select-none pointer-events-none">
+                <span className="flex h-full -translate-y-1/4 items-center justify-center
+                         text-muted text-sm select-none pointer-events-none">
                     No data
                 </span>
             )}
@@ -448,10 +446,10 @@ export default function Timeline({ medications = [], interventions = [], visual 
 
     return (
         <div className="flex flex-col gap-1 w-full overflow-hidden">
-            <h2 className="text-muted text-sm uppercase tracking-widest mb-3">Timeline</h2>
+            <h2 className="text-muted text-center text-sm uppercase tracking-widest mb-3">Timeline</h2>
 
             {!hasData && (
-                <p className="text-muted text-sm">No timeline data yet.</p>
+                <p className="text-muted text-center text-sm">No timeline data yet.</p>
             )}
 
             <div className="flex w-full">
@@ -461,7 +459,7 @@ export default function Timeline({ medications = [], interventions = [], visual 
                     {LANES.map(({ key, label }) => (
                         <div
                             key={key}
-                            className="h-52 flex items-center border-b border-muted/10 pr-3"
+                            className="flex items-center border-b border-muted/40 pr-3" style={{ height: "200px" }}
                         >
                             <span className="text-muted/90 text-xs uppercase tracking-wider leading-snug">
                                 {label}
@@ -473,13 +471,14 @@ export default function Timeline({ medications = [], interventions = [], visual 
                 </div>
 
                 {/* ── Chart area — scrolls horizontally when content exceeds container ── */}
-                <div className="flex-1 min-w-0 overflow-x-auto timeline-scroll">
-                    <div className="flex flex-col" style={chartMinWidth ? { minWidth: `${chartMinWidth}px` } : undefined}>
+                <div className="flex-1 min-w-0">
+                    <div className="overflow-x-auto timeline-scroll">
+                        <div className="flex flex-col" style={chartMinWidth ? { minWidth: `${chartMinWidth}px` } : undefined}>
 
                         {/* Lane rows + cursor overlay */}
                         <div
                             ref={chartRef}
-                            className="relative flex flex-col border-l border-muted/20"
+                            className="relative flex flex-col border-l border-r border-muted/20"
                             onMouseMove={handleMouseMove}
                             onMouseLeave={handleMouseLeave}
                         >
@@ -528,15 +527,15 @@ export default function Timeline({ medications = [], interventions = [], visual 
                                 )}
                             </div>
                         )}
-
-                        {/* "Time" axis label */}
-                        {hasData && (
-                            <p className="text-center text-xs text-muted/80 uppercase tracking-widest mt-0.5">
-                                Time
-                            </p>
-                        )}
-
+                        </div>
                     </div>
+
+                    {/* "Time" axis label (kept outside the scroller so it doesn't move) */}
+                    {hasData && (
+                        <p className="text-center text-xs text-muted/80 uppercase tracking-widest mt-0.5">
+                            Time
+                        </p>
+                    )}
                 </div>
             </div>
         </div>
