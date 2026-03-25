@@ -400,36 +400,37 @@ const LANES = [
 const REVEAL_STAGGER_MS = 150;
 
 /**
- * Track which event IDs we've already rendered. When new IDs appear, tag
- * them with a stagger index so the Dot component can apply animation-delay.
- * Returns the event arrays with _revealIndex set on new items.
+ * Track which event IDs have been rendered. New IDs get a _revealIndex so
+ * the Dot component can stagger their CSS animation-delay.
  *
- * All tracking lives inside Timeline via a ref — SessionPage doesn't need
- * to know about animation at all.
+ * StrictMode-safe: no refs are mutated inside useMemo. The seenIds ref is
+ * only updated in useEffect (which runs once after commit, not during the
+ * double-invoked render phase).
  */
 function useStaggeredReveal(eventsByLane) {
-    const seenIds = useRef(new Set());
-    const isFirstRender = useRef(true);
+    const prevIdsRef = useRef(null);
 
     const result = useMemo(() => {
+        const prev = prevIdsRef.current;
+        if (!prev) return eventsByLane;
+
         const tagged = {};
         let newIndex = 0;
-
         for (const [lane, events] of Object.entries(eventsByLane)) {
             tagged[lane] = events.map((event) => {
-                if (seenIds.current.has(event.id)) {
-                    return event;
-                }
-                seenIds.current.add(event.id);
-                if (isFirstRender.current) {
-                    return event;
-                }
+                if (prev.has(event.id)) return event;
                 return { ...event, _revealIndex: newIndex++ };
             });
         }
-
-        isFirstRender.current = false;
         return tagged;
+    }, [eventsByLane]);
+
+    useEffect(() => {
+        const ids = new Set();
+        for (const events of Object.values(eventsByLane)) {
+            for (const event of events) ids.add(event.id);
+        }
+        prevIdsRef.current = ids;
     }, [eventsByLane]);
 
     return result;
