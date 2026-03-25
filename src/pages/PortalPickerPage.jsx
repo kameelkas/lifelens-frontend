@@ -13,15 +13,15 @@ export default function PortalPickerPage() {
     const navigate = useNavigate();
 
     return (
-        <div className="min-h-screen bg-brand-navy text-white">
+        <div className="min-h-screen bg-app-bg text-ink">
 
-            <header className="flex items-center justify-between px-8 py-5 border-b border-white/10">
+            <header className="flex items-center justify-between px-8 py-5 border-b border-muted/20">
                 <h1 className="text-brand-gold text-xl font-semibold">LifeLens</h1>
                 <div className="flex items-center gap-4">
-                    <span className="text-brand-gray text-sm">{user}</span>
+                    <span className="text-muted text-sm">{user}</span>
                     <button
                         onClick={logout}
-                        className="text-brand-gray text-sm hover:text-white transition-colors"
+                        className="text-muted text-sm hover:text-ink transition-colors"
                     >
                         Sign out
                     </button>
@@ -29,37 +29,37 @@ export default function PortalPickerPage() {
             </header>
 
             <main className="max-w-2xl mx-auto px-8 py-20">
-                <h2 className="text-white/60 text-sm uppercase tracking-widest text-center mb-10">
+                <h2 className="text-muted text-sm uppercase tracking-widest text-center mb-10">
                     Select a Portal
                 </h2>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                     <button
                         onClick={() => navigate("/ems")}
-                        className="group flex flex-col items-center gap-4 bg-white/5 border border-white/10
-                                   rounded-xl px-8 py-12 hover:bg-white/10 hover:border-brand-gold/40
+                        className="group flex flex-col items-center gap-4 bg-white/75 border border-muted/20
+                                   rounded-xl px-8 py-12 hover:bg-white hover:border-brand-gold/50
                                    transition-all cursor-pointer"
                     >
                         <span className="text-4xl">🚑</span>
-                        <span className="text-white text-lg font-semibold group-hover:text-brand-gold transition-colors">
+                        <span className="text-ink text-lg font-semibold group-hover:text-brand-gold transition-colors">
                             EMS Portal
                         </span>
-                        <span className="text-brand-gray text-xs text-center leading-relaxed">
+                        <span className="text-muted text-xs text-center leading-relaxed">
                             Live session monitoring, body map, and timeline
                         </span>
                     </button>
 
                     <button
                         onClick={() => navigate("/ahs")}
-                        className="group flex flex-col items-center gap-4 bg-white/5 border border-white/10
-                                   rounded-xl px-8 py-12 hover:bg-white/10 hover:border-brand-gold/40
+                        className="group flex flex-col items-center gap-4 bg-white/75 border border-muted/20
+                                   rounded-xl px-8 py-12 hover:bg-white hover:border-brand-gold/50
                                    transition-all cursor-pointer"
                     >
                         <span className="text-4xl">🏥</span>
-                        <span className="text-white text-lg font-semibold group-hover:text-brand-gold transition-colors">
+                        <span className="text-ink text-lg font-semibold group-hover:text-brand-gold transition-colors">
                             AHS Portal
                         </span>
-                        <span className="text-brand-gray text-xs text-center leading-relaxed">
+                        <span className="text-muted text-xs text-center leading-relaxed">
                             Session image review and decryption
                         </span>
                     </button>

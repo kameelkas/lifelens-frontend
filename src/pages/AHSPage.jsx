@@ -52,7 +52,7 @@ function ImageCard({ imageId, sessionId, deviceId, ahsPassword }) {
     fetchImageEncrypted(sessionId, imageId, deviceId)
       .then((buffer) => setNoiseSrc(encryptedBytesToNoiseUrl(buffer)))
       .catch(() => setError("Failed to load image"));
-  }, [imageId]);
+  }, [imageId, sessionId, deviceId]);
 
   // Decrypt when ahsPassword is provided
   useEffect(() => {
@@ -66,20 +66,20 @@ function ImageCard({ imageId, sessionId, deviceId, ahsPassword }) {
       .then((src) => setDecryptedSrc(src))
       .catch(() => setError("Decryption failed — check password"))
       .finally(() => setDecrypting(false));
-  }, [ahsPassword]);
+  }, [ahsPassword, sessionId, imageId, deviceId]);
 
   const src = decryptedSrc || noiseSrc;
 
   return (
-    <div className="bg-white/5 border border-white/10 rounded-lg overflow-hidden">
-      <div className="aspect-square bg-black flex items-center justify-center">
+    <div className="bg-white/75 border border-muted/20 rounded-lg overflow-hidden">
+      <div className="aspect-square bg-app-bg/60 flex items-center justify-center">
         {src
           ? <img src={src} alt={imageId} className="w-full h-full object-contain" />
-          : <p className="text-brand-gray text-xs">Loading...</p>
+          : <p className="text-muted text-xs">Loading...</p>
         }
       </div>
       <div className="p-2">
-        <p className="text-brand-gray text-xs truncate">{imageId}</p>
+        <p className="text-muted text-xs truncate">{imageId}</p>
         {decrypting && <p className="text-brand-gold text-xs mt-1">Decrypting...</p>}
         {error && <p className="text-red-400 text-xs mt-1">{error}</p>}
         {decryptedSrc && !error && (
@@ -121,27 +121,27 @@ export default function AHSPage() {
   }
 
   return (
-    <div className="min-h-screen bg-brand-navy text-white">
+    <div className="min-h-screen bg-app-bg text-ink">
 
       {/* Header */}
-      <header className="flex items-center justify-between px-8 py-5 border-b border-white/10">
+      <header className="flex items-center justify-between px-8 py-5 border-b border-muted/20">
         <div className="flex items-center gap-4">
           <button
             onClick={() => navigate("/ahs")}
-            className="text-brand-gray text-sm hover:text-white transition-colors"
+            className="text-muted text-sm hover:text-ink transition-colors"
           >
             ← Sessions
           </button>
           <h1 className="text-brand-gold text-lg font-semibold">AHS Portal</h1>
-          <span className="text-white/40 text-sm">{sessionId}</span>
+          <span className="text-muted/80 text-sm">{sessionId}</span>
         </div>
       </header>
 
       <main className="max-w-5xl mx-auto px-8 py-10">
 
         {/* Password gate */}
-        <div className="mb-8 bg-white/5 border border-white/10 rounded-lg px-6 py-5">
-          <p className="text-white/60 text-sm mb-4">
+        <div className="mb-8 bg-white/75 border border-muted/20 rounded-lg px-6 py-5 shadow-sm">
+          <p className="text-muted text-sm mb-4">
             Images are shown anonymized by default. Enter the AHS password to decrypt.
           </p>
 
@@ -150,7 +150,7 @@ export default function AHSPage() {
               <p className="text-green-400 text-sm">Images decrypted</p>
               <button
                 onClick={handleLock}
-                className="text-brand-gray text-sm hover:text-white transition-colors"
+                className="text-muted text-sm hover:text-ink transition-colors"
               >
                 Lock
               </button>
@@ -163,12 +163,12 @@ export default function AHSPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="bg-white/10 text-white placeholder-brand-gray border border-white/10
+                className="bg-white text-ink placeholder-muted/80 border border-muted/25
                            rounded px-4 py-2 text-sm focus:outline-none focus:border-brand-gold"
               />
               <button
                 type="submit"
-                className="bg-brand-gold text-brand-navy font-semibold rounded px-4 py-2
+                className="bg-brand-gold text-ink font-semibold rounded px-4 py-2
                            text-sm hover:opacity-90 transition-opacity"
               >
                 Decrypt all
@@ -178,11 +178,11 @@ export default function AHSPage() {
         </div>
 
         {/* Image grid */}
-        {loading && <p className="text-brand-gray text-sm">Loading...</p>}
+        {loading && <p className="text-muted text-sm">Loading...</p>}
         {error && <p className="text-red-400 text-sm">{error}</p>}
 
         {!loading && !error && imageIds.length === 0 && (
-          <p className="text-brand-gray text-sm">No images found for this session.</p>
+          <p className="text-muted text-sm">No images found for this session.</p>
         )}
 
         {!loading && !error && imageIds.length > 0 && (

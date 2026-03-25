@@ -33,8 +33,8 @@ export default function LoginPage() {
     }
 
     return (
-        <div className="min-h-screen bg-brand-navy flex items-center justify-center">
-            <div className="w-full max-w-sm bg-white/5 border border-white/10 rounded-lg p-8">
+        <div className="min-h-screen bg-app-bg flex items-center justify-center text-ink">
+            <div className="w-full max-w-sm bg-white/80 border border-muted/20 rounded-lg p-8 shadow-sm">
 
                 {/* Logo / title */}
                 <h1 className="text-brand-gold text-2xl font-semibold text-center mb-8">
@@ -48,7 +48,7 @@ export default function LoginPage() {
                         value={username}
                         onChange={(e) => setUsername(e.target.value)}
                         required
-                        className="bg-white/10 text-white placeholder-brand-gray border border-white/10
+                        className="bg-white text-ink placeholder-muted/80 border border-muted/25
                        rounded px-4 py-2 focus:outline-none focus:border-brand-gold"
                     />
 
@@ -58,7 +58,7 @@ export default function LoginPage() {
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         required
-                        className="bg-white/10 text-white placeholder-brand-gray border border-white/10
+                        className="bg-white text-ink placeholder-muted/80 border border-muted/25
                        rounded px-4 py-2 focus:outline-none focus:border-brand-gold"
                     />
 
@@ -69,7 +69,7 @@ export default function LoginPage() {
                     <button
                         type="submit"
                         disabled={loading}
-                        className="bg-brand-gold text-brand-navy font-semibold rounded px-4 py-2
+                        className="bg-brand-gold text-ink font-semibold rounded px-4 py-2
                        hover:opacity-90 disabled:opacity-50 transition-opacity"
                     >
                         {loading ? "Signing in..." : "Sign in"}

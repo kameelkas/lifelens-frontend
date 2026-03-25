@@ -85,34 +85,34 @@ export default function SessionPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-brand-navy flex items-center justify-center">
-        <p className="text-brand-gray text-sm">Loading session…</p>
+      <div className="min-h-screen bg-app-bg flex items-center justify-center">
+        <p className="text-muted text-sm">Loading session…</p>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="min-h-screen bg-brand-navy flex items-center justify-center">
+      <div className="min-h-screen bg-app-bg flex items-center justify-center">
         <p className="text-red-400 text-sm">{error}</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-brand-navy text-white">
+    <div className="min-h-screen bg-app-bg text-ink">
 
       {/* Header */}
-      <header className="flex items-center justify-between px-8 py-5 border-b border-white/10">
+      <header className="flex items-center justify-between px-8 py-5 border-b border-muted/20">
         <div className="flex items-center gap-4">
           <button
             onClick={() => navigate("/ems")}
-            className="text-brand-gray text-sm hover:text-white transition-colors"
+            className="text-muted text-sm hover:text-ink transition-colors"
           >
             ← Sessions
           </button>
           <h1 className="text-brand-gold text-lg font-semibold">EMS Portal</h1>
-          <span className="text-white/40 text-sm">{sessionId}</span>
+          <span className="text-muted/80 text-sm">{sessionId}</span>
         </div>
 
         {/* Live badge */}

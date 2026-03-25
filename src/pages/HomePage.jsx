@@ -59,23 +59,23 @@ export default function HomePage({ portalName = "LifeLens", sessionBasePath = "/
   }
 
   return (
-    <div className="min-h-screen bg-brand-navy text-white">
+    <div className="min-h-screen bg-app-bg text-ink">
 
-      <header className="flex items-center justify-between px-8 py-5 border-b border-white/10">
+      <header className="flex items-center justify-between px-8 py-5 border-b border-muted/20">
         <div className="flex items-center gap-4">
           <button
             onClick={() => navigate("/")}
-            className="text-brand-gray text-sm hover:text-white transition-colors"
+            className="text-muted text-sm hover:text-ink transition-colors"
           >
             ← Portals
           </button>
           <h1 className="text-brand-gold text-xl font-semibold">{portalName}</h1>
         </div>
         <div className="flex items-center gap-4">
-          <span className="text-brand-gray text-sm">{user}</span>
+          <span className="text-muted text-sm">{user}</span>
           <button
             onClick={logout}
-            className="text-brand-gray text-sm hover:text-white transition-colors"
+            className="text-muted text-sm hover:text-ink transition-colors"
           >
             Sign out
           </button>
@@ -103,12 +103,12 @@ export default function HomePage({ portalName = "LifeLens", sessionBasePath = "/
           </div>
         )}
 
-        <h2 className="text-white/60 text-sm uppercase tracking-widest mb-4">
+        <h2 className="text-muted text-sm uppercase tracking-widest mb-4">
           Recent Sessions
         </h2>
 
         {loading && (
-          <p className="text-brand-gray text-sm">Loading...</p>
+          <p className="text-muted text-sm">Loading...</p>
         )}
 
         {error && (
@@ -116,7 +116,7 @@ export default function HomePage({ portalName = "LifeLens", sessionBasePath = "/
         )}
 
         {!loading && !error && sessions.length === 0 && (
-          <p className="text-brand-gray text-sm">No sessions recorded yet.</p>
+          <p className="text-muted text-sm">No sessions recorded yet.</p>
         )}
 
         {!loading && !error && sessions.length > 0 && (
@@ -125,18 +125,18 @@ export default function HomePage({ portalName = "LifeLens", sessionBasePath = "/
               <li
                 key={session.session_id}
                 onClick={() => navigate(`${sessionBasePath}/${session.session_id}`)}
-                className="flex items-center justify-between bg-white/5 border border-white/10
-                           rounded-lg px-6 py-4 cursor-pointer hover:bg-white/10 transition-colors"
+                className="flex items-center justify-between bg-white/75 border border-muted/20
+                           rounded-lg px-6 py-4 cursor-pointer hover:bg-white transition-colors"
               >
                 <div>
-                  <p className="text-white text-sm font-medium">
+                  <p className="text-ink text-sm font-medium">
                     {session.session_id}
                   </p>
-                  <p className="text-brand-gray text-xs mt-1">
+                  <p className="text-muted text-xs mt-1">
                     {formatDate(session.created_at)}
                   </p>
                 </div>
-                <span className="text-brand-gray text-sm">→</span>
+                <span className="text-muted text-sm">→</span>
               </li>
             ))}
           </ul>

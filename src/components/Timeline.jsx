@@ -121,10 +121,10 @@ function EkgBackground() {
             className="absolute inset-0 pointer-events-none"
             style={{
                 backgroundImage: `
-                    linear-gradient(to right, rgba(255,255,255,0.04) 1px, transparent 1px),
-                    linear-gradient(to bottom, rgba(255,255,255,0.04) 1px, transparent 1px),
-                    linear-gradient(to right, rgba(255,255,255,0.08) 1px, transparent 1px),
-                    linear-gradient(to bottom, rgba(255,255,255,0.08) 1px, transparent 1px)
+                    linear-gradient(to right, rgba(0,27,58,0.05) 1px, transparent 1px),
+                    linear-gradient(to bottom, rgba(0,27,58,0.05) 1px, transparent 1px),
+                    linear-gradient(to right, rgba(0,27,58,0.1) 1px, transparent 1px),
+                    linear-gradient(to bottom, rgba(0,27,58,0.1) 1px, transparent 1px)
                 `,
                 backgroundSize: `
                     10px 10px,
@@ -143,8 +143,8 @@ function EkgBackground() {
 function MedicationTooltip({ event }) {
     return (
         <>
-            <p className="text-white text-sm font-semibold">{event.medication || "—"}</p>
-            <p className="text-brand-gray text-xs mb-1">{event.start_time}</p>
+            <p className="text-ink text-sm font-semibold">{event.medication || "—"}</p>
+            <p className="text-muted text-xs mb-1">{event.start_time}</p>
             {event.dosage && (
                 <p className="text-green-400 text-xs">Dose: {event.dosage}</p>
             )}
@@ -152,7 +152,7 @@ function MedicationTooltip({ event }) {
                 <p className="text-green-400 text-xs">Route: {event.route}</p>
             )}
             {event.medication_confidence != null && (
-                <p className="text-white/30 text-xs mt-1">
+                <p className="text-muted/80 text-xs mt-1">
                     Conf: {(event.medication_confidence * 100).toFixed(0)}%
                 </p>
             )}
@@ -163,10 +163,10 @@ function MedicationTooltip({ event }) {
 function InterventionTooltip({ event }) {
     return (
         <>
-            <p className="text-white text-sm font-semibold">{event.event_category || "—"}</p>
-            <p className="text-brand-gray text-sm mb-1">{event.start_time}</p>
+            <p className="text-ink text-sm font-semibold">{event.event_category || "—"}</p>
+            <p className="text-muted text-sm mb-1">{event.start_time}</p>
             {event.full_text && (
-                <p className="text-white/50 text-sm leading-snug">
+                <p className="text-muted text-sm leading-snug">
                     {event.full_text}
                 </p>
             )}
@@ -177,14 +177,14 @@ function InterventionTooltip({ event }) {
 function InjuryTooltip({ event }) {
     return (
         <>
-            <p className="text-white text-xs font-semibold capitalize">{event.bodyPart}</p>
+            <p className="text-ink text-xs font-semibold capitalize">{event.bodyPart}</p>
             <p className="text-red-400 text-xs">{event.injuryType}</p>
-            <p className="text-brand-gray text-xs mb-1">
+            <p className="text-muted text-xs mb-1">
                 {/* Show only HH:MM:SS from pred_time */}
                 {event.pred_time?.split(" ")[1] ?? ""}
             </p>
             {event.accuracy != null && (
-                <p className="text-white/30 text-xs">
+                <p className="text-muted/80 text-xs">
                     Conf: {(event.accuracy * 100).toFixed(0)}%
                 </p>
             )}
@@ -221,7 +221,7 @@ function PortalTooltip({ dotRect, laneType, event }) {
     return createPortal(
         <div
             ref={tooltipRef}
-            className="fixed z-[9999] bg-[#0d1829] border border-white/15 rounded-lg p-3 shadow-2xl w-72 max-w-[90vw]"
+            className="fixed z-[9999] bg-white border border-muted/20 rounded-lg p-3 shadow-2xl w-72 max-w-[90vw]"
             style={{
                 pointerEvents: "none",
                 top: pos ? `${pos.top}px` : "-9999px",
@@ -347,12 +347,12 @@ function LaneRow({ events, laneType, minTime, maxTime }) {
     );
 
     return (
-        <div className="relative h-52 border-b border-white/5 overflow-visible">
+        <div className="relative h-52 border-b border-muted/10 overflow-visible">
             {/* Faint EKG pattern */}
             <EkgBackground />
 
             {/* Centre guide line */}
-            <div className="absolute inset-x-0 top-1/2 h-px bg-white/5 pointer-events-none" />
+            <div className="absolute inset-x-0 top-1/2 h-px bg-muted/15 pointer-events-none" />
 
             {/* Event dots */}
             {positioned.map(({ event, topPct }) => (
@@ -367,7 +367,7 @@ function LaneRow({ events, laneType, minTime, maxTime }) {
 
             {events.length === 0 && (
                 <span className="absolute inset-0 flex items-center justify-center
-                         text-white/15 text-xs select-none pointer-events-none">
+                         text-muted/60 text-xs select-none pointer-events-none">
                     No data
                 </span>
             )}
@@ -448,10 +448,10 @@ export default function Timeline({ medications = [], interventions = [], visual 
 
     return (
         <div className="flex flex-col gap-1 w-full overflow-hidden">
-            <h2 className="text-white/60 text-sm uppercase tracking-widest mb-3">Timeline</h2>
+            <h2 className="text-muted text-sm uppercase tracking-widest mb-3">Timeline</h2>
 
             {!hasData && (
-                <p className="text-brand-gray text-sm">No timeline data yet.</p>
+                <p className="text-muted text-sm">No timeline data yet.</p>
             )}
 
             <div className="flex w-full">
@@ -461,9 +461,9 @@ export default function Timeline({ medications = [], interventions = [], visual 
                     {LANES.map(({ key, label }) => (
                         <div
                             key={key}
-                            className="h-52 flex items-center border-b border-white/5 pr-3"
+                            className="h-52 flex items-center border-b border-muted/10 pr-3"
                         >
-                            <span className="text-white/40 text-xs uppercase tracking-wider leading-snug">
+                            <span className="text-muted/90 text-xs uppercase tracking-wider leading-snug">
                                 {label}
                             </span>
                         </div>
@@ -479,7 +479,7 @@ export default function Timeline({ medications = [], interventions = [], visual 
                         {/* Lane rows + cursor overlay */}
                         <div
                             ref={chartRef}
-                            className="relative flex flex-col border-l border-white/10"
+                            className="relative flex flex-col border-l border-muted/20"
                             onMouseMove={handleMouseMove}
                             onMouseLeave={handleMouseLeave}
                         >
@@ -509,7 +509,7 @@ export default function Timeline({ medications = [], interventions = [], visual 
                                 {ticks.map((tick, i) => (
                                     <span
                                         key={i}
-                                        className="absolute -translate-x-1/2 text-xs text-white/25 tabular-nums"
+                                        className="absolute -translate-x-1/2 text-xs text-muted/80 tabular-nums"
                                         style={{ left: `${tick.pct}%` }}
                                     >
                                         {formatTime(tick.time)}
@@ -519,8 +519,8 @@ export default function Timeline({ medications = [], interventions = [], visual 
                                 {/* Cursor time label — follows the cursor line */}
                                 {cursorPct !== null && (
                                     <span
-                                        className="absolute -translate-x-1/2 text-xs text-blue-300/80 tabular-nums
-                                 bg-[#0d1829] px-1 rounded border border-blue-400/30 pointer-events-none z-20"
+                                        className="absolute -translate-x-1/2 text-xs text-ink tabular-nums
+                                 bg-white px-1 rounded border border-blue-400/40 pointer-events-none z-20"
                                         style={{ left: `${cursorPct}%` }}
                                     >
                                         {formatTime(cursorTime)}
@@ -531,7 +531,7 @@ export default function Timeline({ medications = [], interventions = [], visual 
 
                         {/* "Time" axis label */}
                         {hasData && (
-                            <p className="text-center text-xs text-white/20 uppercase tracking-widest mt-0.5">
+                            <p className="text-center text-xs text-muted/80 uppercase tracking-widest mt-0.5">
                                 Time
                             </p>
                         )}

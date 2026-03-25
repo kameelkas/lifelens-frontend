@@ -125,7 +125,7 @@ function PortalTooltip({ anchorRect, label, state, imgSrc, imgLoading }) {
   return createPortal(
     <div
       ref={tooltipRef}
-      className="fixed z-[9999] rounded-lg border border-white/15 bg-[#0d1829] p-4 shadow-2xl
+      className="fixed z-[9999] rounded-lg border border-muted/20 bg-white p-4 shadow-2xl
                  w-72 max-w-[90vw]"
       style={{
         pointerEvents: "none",
@@ -133,7 +133,7 @@ function PortalTooltip({ anchorRect, label, state, imgSrc, imgLoading }) {
         left: pos ? `${pos.left}px` : "-9999px",
       }}
     >
-      <p className="text-white text-sm font-semibold capitalize mb-2">{label}</p>
+      <p className="text-ink text-sm font-semibold capitalize mb-2">{label}</p>
 
       {state.status === "healthy" && (
         <p className="text-green-400 text-xs mb-3">No injuries detected</p>
@@ -146,13 +146,13 @@ function PortalTooltip({ anchorRect, label, state, imgSrc, imgLoading }) {
             .map((inj) => (
               <li key={inj.type} className="flex items-center justify-between">
                 <span className="text-red-400 text-xs">{inj.type}</span>
-                <span className="text-white/40 text-xs">{(inj.accuracy * 100).toFixed(0)}%</span>
+                <span className="text-muted/80 text-xs">{(inj.accuracy * 100).toFixed(0)}%</span>
               </li>
             ))}
         </ul>
       )}
 
-      {imgLoading && <p className="text-white/30 text-xs">Loading image...</p>}
+      {imgLoading && <p className="text-muted/80 text-xs">Loading image...</p>}
       {imgSrc && (
         <img src={imgSrc} alt={label} className="w-full rounded object-contain max-h-48" />
       )}
@@ -204,10 +204,10 @@ export default function BodyMap({ visual = {}, sessionId, deviceId }) {
 
   return (
     <div className="flex flex-col items-center gap-2 w-full">
-      <h2 className="text-white/60 text-sm uppercase tracking-widest">Body Map</h2>
+      <h2 className="text-muted text-sm uppercase tracking-widest">Body Map</h2>
 
       {/* Legend */}
-      <div className="flex items-center gap-3 text-xs text-brand-gray flex-wrap justify-center mb-1">
+      <div className="flex items-center gap-3 text-xs text-muted flex-wrap justify-center mb-1">
         <span className="flex items-center gap-1">
           <span className="inline-block w-3 h-3 rounded-full" style={{ background: GREY_COLOR }} />
           No data
@@ -272,7 +272,7 @@ export default function BodyMap({ visual = {}, sessionId, deviceId }) {
           <ellipse cx="117" cy="268" rx="18" ry="10" />
         </Region>
 
-        <g fill="white" fontSize="7" textAnchor="middle" style={{ pointerEvents: "none" }}>
+        <g fill="#001B3A" fontSize="7" textAnchor="middle" style={{ pointerEvents: "none" }}>
           <text x="100" y="22">Head</text>
           <text x="100" y="34">Face</text>
           <text x="100" y="61">Neck</text>
