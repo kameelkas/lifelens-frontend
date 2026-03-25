@@ -14,8 +14,10 @@
  */
 
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { fetchImages, fetchImageEncrypted, fetchAHSImage } from "../api/client";
+import Navbar from "../components/Navbar";
+import Footer from "../components/Footer";
 
 // Render Fernet-encrypted bytes as pixel noise on a canvas
 // Returns a data URL string
@@ -94,7 +96,6 @@ export default function AHSPage() {
   const { sessionId } = useParams();
   // device_id is embedded in session_id: session_{date}_{time}_{device_id}
   const deviceId = sessionId.split("_").slice(3).join("_");
-  const navigate = useNavigate();
 
   const [imageIds, setImageIds] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -121,23 +122,20 @@ export default function AHSPage() {
   }
 
   return (
-    <div className="min-h-screen bg-app-bg text-ink">
+    <div className="min-h-screen bg-app-bg text-ink flex flex-col">
+      <Navbar />
 
-      {/* Header */}
-      <header className="flex items-center justify-between px-8 py-5 border-b border-muted/20">
-        <div className="flex items-center gap-4">
-          <button
-            onClick={() => navigate("/ahs")}
-            className="text-muted text-sm hover:text-ink transition-colors"
+      <main className="flex-1 h-full max-w-full px-8 py-10 pb-24">
+        <div className="flex items-center gap-4 mb-8 min-w-0">
+          <Link
+            to="/ahs"
+            className="text-muted text-sm hover:text-ink transition-colors whitespace-nowrap"
           >
             ← Sessions
-          </button>
-          <h1 className="text-brand-gold text-lg font-semibold">AHS Portal</h1>
-          <span className="text-muted/80 text-sm">{sessionId}</span>
+          </Link>
+          <h1 className="text-brand-gold text-lg font-semibold whitespace-nowrap">AHS Portal</h1>
+          <span className="text-muted/80 text-sm truncate">{sessionId}</span>
         </div>
-      </header>
-
-      <main className="max-w-5xl mx-auto px-8 py-10">
 
         {/* Password gate */}
         <div className="mb-8 bg-white/75 border border-muted/20 rounded-lg px-6 py-5 shadow-sm">
@@ -200,6 +198,8 @@ export default function AHSPage() {
         )}
 
       </main>
+
+      <Footer />
     </div>
   );
 }

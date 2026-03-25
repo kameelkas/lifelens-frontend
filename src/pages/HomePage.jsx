@@ -12,12 +12,12 @@
 
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../auth/AuthContext";
 import { fetchSessions, fetchActiveSession } from "../api/client";
 import useSSE from "../hooks/useSSE";
+import Navbar from "../components/Navbar";
+import Footer from "../components/Footer";
 
 export default function HomePage({ portalName = "LifeLens", sessionBasePath = "/ems/session" }) {
-  const { user, logout } = useAuth();
   const navigate = useNavigate();
 
   const [sessions, setSessions] = useState([]);
@@ -59,10 +59,11 @@ export default function HomePage({ portalName = "LifeLens", sessionBasePath = "/
   }
 
   return (
-    <div className="min-h-screen bg-app-bg text-ink">
+    <div className="min-h-screen bg-app-bg text-ink flex flex-col">
+      <Navbar />
 
-      <header className="flex items-center justify-between px-8 py-5 border-b border-muted/20">
-        <div className="flex items-center gap-4">
+      <main className="flex-1 max-w-6xl px-8 py-10 pb-24">
+        <div className="flex items-center gap-4 mb-8">
           <button
             onClick={() => navigate("/")}
             className="text-muted text-sm hover:text-ink transition-colors"
@@ -71,18 +72,6 @@ export default function HomePage({ portalName = "LifeLens", sessionBasePath = "/
           </button>
           <h1 className="text-brand-gold text-xl font-semibold">{portalName}</h1>
         </div>
-        <div className="flex items-center gap-4">
-          <span className="text-muted text-sm">{user}</span>
-          <button
-            onClick={logout}
-            className="text-muted text-sm hover:text-ink transition-colors"
-          >
-            Sign out
-          </button>
-        </div>
-      </header>
-
-      <main className="max-w-3xl mx-auto px-8 py-10">
 
         {activeSession && (
           <div
@@ -143,6 +132,8 @@ export default function HomePage({ portalName = "LifeLens", sessionBasePath = "/
         )}
 
       </main>
+
+      <Footer />
     </div>
   );
 }

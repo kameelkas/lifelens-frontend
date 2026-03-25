@@ -19,11 +19,13 @@
  */
 
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { fetchMedications, fetchInterventions, fetchVisual, fetchActiveSession } from "../api/client";
 import useSSE from "../hooks/useSSE";
 import BodyMap from "../components/BodyMap";
 import Timeline from "../components/Timeline";
+import Navbar from "../components/Navbar";
+import Footer from "../components/Footer";
 
 export default function SessionPage() {
   const { sessionId } = useParams();
@@ -85,50 +87,59 @@ export default function SessionPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-app-bg flex items-center justify-center">
-        <p className="text-muted text-sm">Loading session…</p>
+      <div className="min-h-screen bg-app-bg text-ink flex flex-col">
+        <Navbar />
+
+        <main className="flex-1 flex items-center justify-center pb-24">
+          <p className="text-muted text-sm">Loading session…</p>
+        </main>
+
+        <Footer />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="min-h-screen bg-app-bg flex items-center justify-center">
-        <p className="text-red-400 text-sm">{error}</p>
+      <div className="min-h-screen bg-app-bg text-ink flex flex-col">
+        <Navbar />
+
+        <main className="flex-1 flex items-center justify-center pb-24">
+          <p className="text-red-400 text-sm">{error}</p>
+        </main>
+
+        <Footer />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-app-bg text-ink">
+    <div className="h-[100%] bg-app-bg text-ink flex flex-col">
+      <Navbar />
 
-      {/* Header */}
-      <header className="flex items-center justify-between px-8 py-5 border-b border-muted/20">
-        <div className="flex items-center gap-4">
-          <button
-            onClick={() => navigate("/ems")}
-            className="text-muted text-sm hover:text-ink transition-colors"
-          >
-            ← Sessions
-          </button>
-          <h1 className="text-brand-gold text-lg font-semibold">EMS Portal</h1>
-          <span className="text-muted/80 text-sm">{sessionId}</span>
+      <main className="flex-1 px-6 py-6 pb-24 overflow-hidden">
+        <div className="flex items-center justify-between gap-6 mb-6">
+          <div className="flex items-center gap-4 min-w-0">
+            <Link
+              to="/ems"
+              className="text-muted text-sm hover:text-ink transition-colors whitespace-nowrap"
+            >
+              ← Sessions
+            </Link>
+            <span className="text-muted/80 text-sm truncate">{sessionId}</span>
+          </div>
+
+          {isLive && (
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-gold opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-brand-gold" />
+              </span>
+              <span className="text-brand-gold text-lg font-bold">Live</span>
+            </div>
+          )}
         </div>
 
-        {/* Live badge */}
-        {isLive && (
-          <div className="flex items-center gap-2">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-gold opacity-75" />
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-brand-gold" />
-            </span>
-            <span className="text-brand-gold text-lg font-bold">Live</span>
-          </div>
-        )}
-      </header>
-
-      {/* Main content */}
-      <main className="mx-auto px-6 lg:px-10 py-6 overflow-hidden">
         {/*
           Two-column layout:
             BodyMap  — lg:w-[35%], flex-shrink-0
@@ -154,6 +165,7 @@ export default function SessionPage() {
         </div>
       </main>
 
+      <Footer />
     </div>
   );
 }

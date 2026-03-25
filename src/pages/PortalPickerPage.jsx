@@ -6,29 +6,16 @@
  */
 
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../auth/AuthContext";
+import Navbar from "../components/Navbar";
+import Footer from "../components/Footer";
 
 export default function PortalPickerPage() {
-    const { user, logout } = useAuth();
     const navigate = useNavigate();
 
     return (
-        <div className="min-h-screen bg-app-bg text-ink">
-
-            <header className="flex items-center justify-between px-8 py-5 border-b border-muted/20">
-                <h1 className="text-brand-gold text-xl font-semibold">LifeLens</h1>
-                <div className="flex items-center gap-4">
-                    <span className="text-muted text-sm">{user}</span>
-                    <button
-                        onClick={logout}
-                        className="text-muted text-sm hover:text-ink transition-colors"
-                    >
-                        Sign out
-                    </button>
-                </div>
-            </header>
-
-            <main className="max-w-2xl mx-auto px-8 py-20">
+        <div className="min-h-screen bg-app-bg text-ink flex flex-col">
+            <Navbar />
+            <main className="flex-1 max-w-2xl mx-auto px-8 py-20 pb-24">
                 <h2 className="text-muted text-sm uppercase tracking-widest text-center mb-10">
                     Select a Portal
                 </h2>
@@ -65,6 +52,7 @@ export default function PortalPickerPage() {
                     </button>
                 </div>
             </main>
+            <Footer />
         </div>
     );
 }
