@@ -81,7 +81,7 @@ export default function HomePage({ portalName = "LifeLens", sessionBasePath = "/
           </div>
         )}
 
-        <h2 className="text-muted text-lg uppercase tracking-widest mb-4">
+        <h2 className="text-muted text-lg font-bold uppercase tracking-widest mb-4">
           Recent Sessions
         </h2>
 
@@ -90,7 +90,7 @@ export default function HomePage({ portalName = "LifeLens", sessionBasePath = "/
         )}
 
         {error && (
-          <p className="text-red-400 text-sm">{error}</p>
+          <p className="text-red-400 text-base">{error}</p>
         )}
 
         {!loading && !error && sessions.length === 0 && (
