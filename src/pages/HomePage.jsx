@@ -14,8 +14,6 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { fetchSessions, fetchActiveSession } from "../api/client";
 import useSSE from "../hooks/useSSE";
-import Navbar from "../components/Navbar";
-import Footer from "../components/Footer";
 import { formatLocalDateLabel, formatLocalTimeHourMinute } from "../utils/time";
 
 export default function HomePage({ portalName = "LifeLens", sessionBasePath = "/ems/session" }) {
@@ -55,10 +53,7 @@ export default function HomePage({ portalName = "LifeLens", sessionBasePath = "/
   });
 
   return (
-    <div className="min-h-screen bg-app-bg text-ink flex flex-col">
-      <Navbar />
-
-      <main className="flex-1 max-w-full px-8 py-10 pb-24">
+    <main className="flex-1 max-w-full px-8 py-10 pb-24">
         <button
           onClick={() => navigate("/")}
           className="text-muted text-base md:text-lg hover:text-ink transition-all ease-in-out underline-offset-4 hover:underline"
@@ -142,9 +137,6 @@ export default function HomePage({ portalName = "LifeLens", sessionBasePath = "/
           </ul>
         )}
 
-      </main>
-
-      <Footer />
-    </div>
+    </main>
   );
 }

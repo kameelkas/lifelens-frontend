@@ -24,8 +24,6 @@ import { fetchMedications, fetchInterventions, fetchVisual, fetchActiveSession }
 import useSSE from "../hooks/useSSE";
 import BodyMap from "../components/BodyMap";
 import Timeline from "../components/Timeline";
-import Navbar from "../components/Navbar";
-import Footer from "../components/Footer";
 import { formatSessionStartedAt } from "../utils/sessionDisplay";
 
 export default function SessionPage() {
@@ -88,87 +86,69 @@ export default function SessionPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-app-bg text-ink flex flex-col">
-        <Navbar />
-
-        <main className="flex-1 flex items-center justify-center pb-24">
-          <p className="text-muted text-sm">Loading session…</p>
-        </main>
-
-        <Footer />
-      </div>
+      <main className="flex-1 flex items-center justify-center pb-24">
+        <p className="text-muted text-sm">Loading session…</p>
+      </main>
     );
   }
 
   if (error) {
     return (
-      <div className="min-h-screen bg-app-bg text-ink flex flex-col">
-        <Navbar />
-
-        <main className="flex-1 flex items-center justify-center pb-24">
-          <p className="text-red-400 text-sm">{error}</p>
-        </main>
-
-        <Footer />
-      </div>
+      <main className="flex-1 flex items-center justify-center pb-24">
+        <p className="text-red-400 text-sm">{error}</p>
+      </main>
     );
   }
 
   return (
-    <div className="min-h-screen bg-app-bg text-ink flex flex-col">
-      <Navbar />
+    <main className="flex-1 p-6 pb-24 overflow-hidden">
+      <div className="flex items-start justify-between gap-6 mb-6">
+        <div className="flex min-w-0 flex-col gap-1">
+          <Link
+            to="/ems"
+            className="text-muted text-base hover:text-ink transition-all ease-in-out underline-offset-4 hover:underline whitespace-nowrap w-fit"
+          >
+            ← Sessions
+          </Link>
+          <span className="text-muted/80 text-sm truncate">
+            {formatSessionStartedAt(sessionId)}
+          </span>
+        </div>
 
-      <main className="flex-1 p-6 pb-24 overflow-hidden">
-        <div className="flex items-start justify-between gap-6 mb-6">
-          <div className="flex min-w-0 flex-col gap-1">
-            <Link
-              to="/ems"
-              className="text-muted text-base hover:text-ink transition-all ease-in-out underline-offset-4 hover:underline whitespace-nowrap w-fit"
-            >
-              ← Sessions
-            </Link>
-            <span className="text-muted/80 text-sm truncate">
-              {formatSessionStartedAt(sessionId)}
+        {isLive && (
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-gold opacity-75" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-brand-gold" />
             </span>
+            <span className="text-brand-gold text-lg font-bold">Live</span>
           </div>
+        )}
+      </div>
 
-          {isLive && (
-            <div className="flex items-center gap-2 flex-shrink-0">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-gold opacity-75" />
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-brand-gold" />
-              </span>
-              <span className="text-brand-gold text-lg font-bold">Live</span>
-            </div>
-          )}
+      {/*
+        Two-column layout:
+          BodyMap  — lg:w-[35%], flex-shrink-0
+          Timeline — flex-1, min-w-0 (prevents flex overflow)
+        On screens smaller than lg (1024px) they stack: body map above, timeline below.
+      */}
+      <div className="flex flex-col lg:flex-row gap-6 lg:items-start">
+
+        {/* Body map — fixed proportion, centred when stacked */}
+        <div className="w-full lg:w-[25%] flex-shrink-0 flex justify-center lg:justify-start">
+          <BodyMap visual={visual} sessionId={sessionId} deviceId={deviceId} />
         </div>
 
-        {/*
-          Two-column layout:
-            BodyMap  — lg:w-[35%], flex-shrink-0
-            Timeline — flex-1, min-w-0 (prevents flex overflow)
-          On screens smaller than lg (1024px) they stack: body map above, timeline below.
-        */}
-        <div className="flex flex-col lg:flex-row gap-6 lg:items-start">
-
-          {/* Body map — fixed proportion, centred when stacked */}
-          <div className="w-full lg:w-[25%] flex-shrink-0 flex justify-center lg:justify-start">
-            <BodyMap visual={visual} sessionId={sessionId} deviceId={deviceId} />
-          </div>
-
-          {/* Timeline — takes remaining width; min-w-0 + overflow-hidden contain scroll */}
-          <div className="flex-1 min-w-0 w-full overflow-hidden">
-            <Timeline
-              medications={medications}
-              interventions={interventions}
-              visual={visual}
-            />
-          </div>
-
+        {/* Timeline — takes remaining width; min-w-0 + overflow-hidden contain scroll */}
+        <div className="flex-1 min-w-0 w-full overflow-hidden">
+          <Timeline
+            medications={medications}
+            interventions={interventions}
+            visual={visual}
+          />
         </div>
-      </main>
 
-      <Footer />
-    </div>
+      </div>
+    </main>
   );
 }

@@ -16,8 +16,6 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { fetchImages, fetchImageEncrypted, fetchAHSImage } from "../api/client";
-import Navbar from "../components/Navbar";
-import Footer from "../components/Footer";
 import { formatSessionStartedAt } from "../utils/sessionDisplay";
 
 // Render Fernet-encrypted bytes as pixel noise on a canvas
@@ -123,10 +121,7 @@ export default function AHSPage() {
   }
 
   return (
-    <div className="min-h-screen bg-app-bg text-ink flex flex-col">
-      <Navbar />
-
-      <main className="flex-1 h-full max-w-full px-8 py-10 pb-24">
+    <main className="flex-1 h-full max-w-full px-8 py-10 pb-24">
         <div className="mb-8 flex min-w-0 flex-col gap-1">
           <Link
             to="/ems"
@@ -202,9 +197,6 @@ export default function AHSPage() {
           </div>
         )}
 
-      </main>
-
-      <Footer />
-    </div>
+    </main>
   );
 }
