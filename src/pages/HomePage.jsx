@@ -1,12 +1,13 @@
 /**
- * HomePage.jsx
+ * HomePage.jsx — Shared sessions list
  *
- * Displays:
- *   - A live session banner if a session is currently active
- *   - A list of the 20 most recent past sessions
+ * Used by both EMS and AHS portals. The `portalName` prop controls
+ * the header title, and `sessionBasePath` controls where clicking
+ * a session navigates (e.g. "/ems/session" or "/ahs").
  *
- * Clicking a session navigates to /session/:id
- * The live banner also navigates to /session/:id for the active session
+ * Props:
+ *   portalName       — display name in the header (e.g. "EMS Portal")
+ *   sessionBasePath  — path prefix for session links (e.g. "/ems/session")
  */
 
 import { useEffect, useState } from "react";
@@ -15,7 +16,7 @@ import { useAuth } from "../auth/AuthContext";
 import { fetchSessions, fetchActiveSession } from "../api/client";
 import useSSE from "../hooks/useSSE";
 
-export default function HomePage() {
+export default function HomePage({ portalName = "LifeLens", sessionBasePath = "/ems/session" }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
@@ -24,7 +25,6 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  // Load sessions and check for active session on mount
   useEffect(() => {
     async function load() {
       try {
@@ -43,30 +43,34 @@ export default function HomePage() {
     load();
   }, []);
 
-  // Listen for session_start / session_end events via SSE
   useSSE((event) => {
     if (event.data_type === "session_start") {
       setActiveSession({ session_id: event.session_id, device_id: event.device_id });
     }
     if (event.data_type === "session_end") {
       setActiveSession(null);
-      // Refresh session list so the ended session appears
       fetchSessions().then(setSessions).catch(() => { });
     }
   });
 
   function formatDate(dateStr) {
     if (!dateStr) return "—";
-    const d = new Date(dateStr);
-    return d.toLocaleString();
+    return new Date(dateStr).toLocaleString();
   }
 
   return (
     <div className="min-h-screen bg-brand-navy text-white">
 
-      {/* Header */}
       <header className="flex items-center justify-between px-8 py-5 border-b border-white/10">
-        <h1 className="text-brand-gold text-xl font-semibold">LifeLens</h1>
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => navigate("/")}
+            className="text-brand-gray text-sm hover:text-white transition-colors"
+          >
+            ← Portals
+          </button>
+          <h1 className="text-brand-gold text-xl font-semibold">{portalName}</h1>
+        </div>
         <div className="flex items-center gap-4">
           <span className="text-brand-gray text-sm">{user}</span>
           <button
@@ -80,10 +84,9 @@ export default function HomePage() {
 
       <main className="max-w-3xl mx-auto px-8 py-10">
 
-        {/* Live session banner */}
         {activeSession && (
           <div
-            onClick={() => navigate(`/session/${activeSession.session_id}`)}
+            onClick={() => navigate(`${sessionBasePath}/${activeSession.session_id}`)}
             className="mb-8 flex items-center justify-between bg-brand-gold/10 border
                        border-brand-gold/40 rounded-lg px-6 py-4 cursor-pointer
                        hover:bg-brand-gold/20 transition-colors"
@@ -100,7 +103,6 @@ export default function HomePage() {
           </div>
         )}
 
-        {/* Past sessions */}
         <h2 className="text-white/60 text-sm uppercase tracking-widest mb-4">
           Recent Sessions
         </h2>
@@ -122,7 +124,7 @@ export default function HomePage() {
             {sessions.map((session) => (
               <li
                 key={session.session_id}
-                onClick={() => navigate(`/session/${session.session_id}`)}
+                onClick={() => navigate(`${sessionBasePath}/${session.session_id}`)}
                 className="flex items-center justify-between bg-white/5 border border-white/10
                            rounded-lg px-6 py-4 cursor-pointer hover:bg-white/10 transition-colors"
               >

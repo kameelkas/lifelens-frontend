@@ -79,7 +79,7 @@ export default function SessionPage() {
     if (event.data_type === "session_end") {
       setIsLive(false);
       alert("Session has ended.");
-      navigate("/");
+      navigate("/ems");
     }
   });
 
@@ -106,12 +106,13 @@ export default function SessionPage() {
       <header className="flex items-center justify-between px-8 py-5 border-b border-white/10">
         <div className="flex items-center gap-4">
           <button
-            onClick={() => navigate("/")}
+            onClick={() => navigate("/ems")}
             className="text-brand-gray text-sm hover:text-white transition-colors"
           >
-            ← Back
+            ← Sessions
           </button>
-          <h1 className="text-white text-sm font-medium">{sessionId}</h1>
+          <h1 className="text-brand-gold text-lg font-semibold">EMS Portal</h1>
+          <span className="text-white/40 text-sm">{sessionId}</span>
         </div>
 
         {/* Live badge */}

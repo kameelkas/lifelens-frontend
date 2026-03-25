@@ -127,14 +127,14 @@ export default function AHSPage() {
       <header className="flex items-center justify-between px-8 py-5 border-b border-white/10">
         <div className="flex items-center gap-4">
           <button
-            onClick={() => navigate(-1)}
+            onClick={() => navigate("/ahs")}
             className="text-brand-gray text-sm hover:text-white transition-colors"
           >
-            ← Back
+            ← Sessions
           </button>
-          <h1 className="text-brand-gold text-xl font-semibold">AHS Portal</h1>
+          <h1 className="text-brand-gold text-lg font-semibold">AHS Portal</h1>
+          <span className="text-white/40 text-sm">{sessionId}</span>
         </div>
-        <p className="text-brand-gray text-xs">{sessionId}</p>
       </header>
 
       <main className="max-w-5xl mx-auto px-8 py-10">
