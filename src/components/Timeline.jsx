@@ -26,6 +26,11 @@
 
 import { useState, useRef, useCallback, useMemo, useEffect } from "react";
 import { createPortal } from "react-dom";
+import {
+  parseWallClockTime,
+  formatSecondsAs12hHm,
+  formatWallClockTimeForDisplay12h,
+} from "../utils/time";
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
@@ -51,29 +56,7 @@ const LANE_DOT_COLORS = {
     injury: { fill: "#693740", border: "#8B5C62" },
 };
 
-// ── Time utilities ────────────────────────────────────────────────────────────
-
-/**
- * Parse a time string to seconds since midnight.
- * Accepts "HH:MM:SS" (from CSV/SQLite) and "YYYY-MM-DD HH:MM:SS" (from pred_time).
- * Returns null if the string is missing or malformed.
- */
-function parseTime(timeStr) {
-    if (!timeStr) return null;
-    const timePart = timeStr.includes(" ") ? timeStr.split(" ")[1] : timeStr;
-    const [h, m, s = 0] = timePart.split(":").map(Number);
-    if (isNaN(h) || isNaN(m)) return null;
-    return h * 3600 + m * 60 + s;
-}
-
-/** Format seconds-since-midnight as "HH:MM:SS". */
-function formatTime(seconds) {
-    if (seconds == null) return "";
-    const h = Math.floor(seconds / 3600);
-    const m = Math.floor((seconds % 3600) / 60);
-    const s = Math.floor(seconds % 60);
-    return [h, m, s].map((n) => String(n).padStart(2, "0")).join(":");
-}
+// ── Time utilities (parsing / HMS formatting: ../utils/time) ─────────────────
 
 /**
  * Map a time value to an x-axis percentage, respecting edge padding.
@@ -96,7 +79,7 @@ function flattenInjuries(visual) {
     Object.entries(visual || {}).forEach(([bodyPart, partData]) => {
         Object.entries(partData?.injuries ?? {}).forEach(([injuryType, data]) => {
             if (injuryType === "no_injury") return;
-            const time = parseTime(data.pred_time);
+            const time = parseWallClockTime(data.pred_time);
             if (time === null) return;
             events.push({
                 id: `${bodyPart}-${injuryType}-${data.pred_time}`,
@@ -114,13 +97,13 @@ function flattenInjuries(visual) {
 
 function prepareMedications(meds) {
     return meds
-        .map((m) => ({ ...m, time: parseTime(m.start_time) }))
+        .map((m) => ({ ...m, time: parseWallClockTime(m.start_time) }))
         .filter((e) => e.time !== null);
 }
 
 function prepareInterventions(interventions) {
     return interventions
-        .map((i) => ({ ...i, time: parseTime(i.start_time) }))
+        .map((i) => ({ ...i, time: parseWallClockTime(i.start_time) }))
         .filter((e) => e.time !== null);
 }
 
@@ -153,7 +136,7 @@ function MedicationTooltip({ event }) {
     return (
         <>
             <p className="text-ink text-base font-bold leading-tight capitalize">{event.medication || "—"}</p>
-            <p className="text-muted text-sm mb-1">Administered at: <b>{event.start_time}</b></p>
+            <p className="text-muted text-sm mb-1">Administered at: <b>{formatWallClockTimeForDisplay12h(event.start_time)}</b></p>
             {event.dosage && (
                 <p className="text-muted text-sm break-words">Dose: <b>{event.dosage}</b></p>
             )}
@@ -173,7 +156,7 @@ function InterventionTooltip({ event }) {
     return (
         <>
             <p className="text-ink text-base font-bold leading-tight">{event.event_category || "—"}</p>
-            <p className="text-muted text-sm mb-1">Intervention began at: <b>{event.start_time}</b></p>
+            <p className="text-muted text-sm mb-1">Intervention began at: <b>{formatWallClockTimeForDisplay12h(event.start_time)}</b></p>
             {event.full_text && (
                 <p className="text-muted text-sm leading-snug max-w-[300px]">
                     {event.full_text}
@@ -188,7 +171,7 @@ function InjuryTooltip({ event }) {
         <>
             <p className="text-ink text-base font-bold leading-tight capitalize">{event.bodyPart}</p>
             <p className="text-muted text-sm break-words">Injury Type: <b>{event.injuryType}</b></p>
-            <p className="text-muted text-sm mb-1">Injury First Detected At: <b>{event.pred_time?.split(" ")[1] ?? ""}</b></p>
+            <p className="text-muted text-sm mb-1">Injury First Detected At: <b>{formatWallClockTimeForDisplay12h(event.pred_time)}</b></p>
             {event.accuracy != null && (
                 <p className="text-muted text-sm">
                     Confidence: <b>{(event.accuracy * 100).toFixed(0)}%</b>
@@ -472,21 +455,24 @@ export default function Timeline({ medications = [], interventions = [], visual 
                     {LANES.map(({ key, label }) => (
                         <div
                             key={key}
-                            className="flex items-center border-b border-muted/40 pr-3" style={{ height: "200px" }}
+                            className="flex items-center border-b border-muted/40 pr-0" style={{ height: "200px" }}
                         >
                             <span className="text-muted text-base font-semibold tracking-wider">
                                 {label}
                             </span>
                         </div>
                     ))}
-                    {/* Spacer matching x-axis height */}
-                    <div className="h-8" />
+                    {/* Spacer matching x-axis row height */}
+                    <div className="min-h-[2.75rem]" aria-hidden />
                 </div>
 
                 {/* ── Chart area — scrolls horizontally when content exceeds container ── */}
                 <div className="flex-1 min-w-0">
-                    <div className="overflow-x-auto timeline-scroll">
-                        <div className="flex flex-col" style={chartMinWidth ? { minWidth: `${chartMinWidth}px` } : undefined}>
+                    <div className="overflow-x-auto timeline-scroll overflow-y-hidden">
+                        <div
+                            className="flex flex-col ml-0 mr-4 sm:mr-6 md:mr-8"
+                            style={chartMinWidth ? { minWidth: `${chartMinWidth}px` } : undefined}
+                        >
 
                         {/* Lane rows + cursor overlay */}
                         <div
@@ -515,27 +501,27 @@ export default function Timeline({ medications = [], interventions = [], visual 
                             ))}
                         </div>
 
-                        {/* ── X-axis tick labels ──────────────────────────────────────── */}
+                        {/* ── X-axis tick labels (horizontal margin on parent gives room for edge labels) ── */}
                         {hasData && (
-                            <div className="relative h-7 mt-1">
+                            <div className="relative mt-1 min-h-[2.75rem] pb-1">
                                 {ticks.map((tick, i) => (
                                     <span
                                         key={i}
-                                        className="absolute -translate-x-1/2 text-sm text-muted/80 tabular-nums"
+                                        className="absolute top-0 -translate-x-1/2 whitespace-nowrap text-xs sm:text-sm text-muted/80 tabular-nums"
                                         style={{ left: `${tick.pct}%` }}
                                     >
-                                        {formatTime(tick.time)}
+                                        {formatSecondsAs12hHm(tick.time)}
                                     </span>
                                 ))}
 
                                 {/* Cursor time label — follows the cursor line */}
                                 {cursorPct !== null && (
                                     <span
-                                        className="absolute -translate-x-1/2 text-sm text-ink tabular-nums
-                                 bg-white px-1 rounded border border-blue-400/40 pointer-events-none z-20"
+                                        className="absolute top-0 -translate-x-1/2 whitespace-nowrap text-xs sm:text-sm text-ink tabular-nums
+                                            bg-white px-1.5 py-0.5 rounded border border-blue-400/40 pointer-events-none z-20"
                                         style={{ left: `${cursorPct}%` }}
                                     >
-                                        {formatTime(cursorTime)}
+                                        {formatSecondsAs12hHm(cursorTime)}
                                     </span>
                                 )}
                             </div>

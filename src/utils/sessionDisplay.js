@@ -3,7 +3,9 @@
  * (device_id may contain underscores; see slice(3).join("_") in pages.)
  */
 
-export function parseSessionStartDate(sessionId) {
+import { formatDateMediumTimeShort } from "./time";
+
+function parseSessionStartDate(sessionId) {
   if (!sessionId || typeof sessionId !== "string") return null;
   const parts = sessionId.split("_");
   if (parts.length < 4 || parts[0] !== "session") return null;
@@ -29,8 +31,5 @@ export function parseSessionStartDate(sessionId) {
 export function formatSessionStartedAt(sessionId) {
   const d = parseSessionStartDate(sessionId);
   if (!d) return sessionId;
-  return new Intl.DateTimeFormat(undefined, {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(d);
+  return formatDateMediumTimeShort(d);
 }

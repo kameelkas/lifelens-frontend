@@ -16,6 +16,7 @@ import { fetchSessions, fetchActiveSession } from "../api/client";
 import useSSE from "../hooks/useSSE";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
+import { formatLocalDateLabel, formatLocalTimeHourMinute } from "../utils/time";
 
 export default function HomePage({ portalName = "LifeLens", sessionBasePath = "/ems/session" }) {
   const navigate = useNavigate();
@@ -52,21 +53,6 @@ export default function HomePage({ portalName = "LifeLens", sessionBasePath = "/
       fetchSessions().then(setSessions).catch(() => { });
     }
   });
-
-  function formatDate(dateStr) {
-    if (!dateStr) return "—";
-    return new Date(dateStr).toLocaleString();
-  }
-
-  function formatDay(dateStr) {
-    if (!dateStr) return "—";
-    return new Date(dateStr).toLocaleDateString();
-  }
-
-  function formatTime(dateStr) {
-    if (!dateStr) return "—";
-    return new Date(dateStr).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-  }
 
   return (
     <div className="min-h-screen bg-app-bg text-ink flex flex-col">
@@ -130,7 +116,7 @@ export default function HomePage({ portalName = "LifeLens", sessionBasePath = "/
                   <div className="min-w-0">
                     <p className="text-muted text-sm uppercase tracking-widest">Date</p>
                     <p className="text-ink text-lg font-semibold mt-1">
-                      {formatDay(session.created_at)}
+                      {formatLocalDateLabel(session.created_at)}
                     </p>
                   </div>
 
@@ -144,7 +130,7 @@ export default function HomePage({ portalName = "LifeLens", sessionBasePath = "/
                     Session Started:
                   </p>
                   <p className="text-ink text-base font-medium mt-1">
-                    {formatTime(session.created_at)}
+                    {formatLocalTimeHourMinute(session.created_at)}
                   </p>
 
                   <p className="text-muted text-xs mt-3 truncate">

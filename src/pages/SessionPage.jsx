@@ -115,7 +115,7 @@ export default function SessionPage() {
   }
 
   return (
-    <div className="h-[100%] bg-app-bg text-ink flex flex-col">
+    <div className="min-h-screen bg-app-bg text-ink flex flex-col">
       <Navbar />
 
       <main className="flex-1 p-6 pb-24 overflow-hidden">
