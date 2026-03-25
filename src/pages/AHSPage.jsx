@@ -138,36 +138,39 @@ export default function AHSPage() {
         </div>
 
         {/* Password gate */}
-        <div className="mb-8 bg-white/75 border border-muted/20 rounded-lg px-6 py-5 shadow-sm">
-          <p className="text-muted text-sm mb-4">
+        <div className="mb-8 min-w-0 max-w-5xl bg-white/75 border border-muted/20 rounded-lg px-4 py-4 shadow-sm sm:px-6 sm:py-5">
+          <p className="text-muted text-sm mb-4 break-words">
             Images are shown anonymized by default. Enter the AHS password to decrypt.
           </p>
 
           {ahsPassword ? (
-            <div className="flex items-center gap-4">
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
               <p className="text-green-400 text-sm">Images decrypted</p>
               <button
                 onClick={handleLock}
-                className="text-muted text-sm hover:text-ink transition-colors"
+                className="text-muted text-sm hover:text-ink transition-colors shrink-0"
               >
                 Lock
               </button>
             </div>
           ) : (
-            <form onSubmit={handleDecrypt} className="flex items-center gap-3">
+            <form
+              onSubmit={handleDecrypt}
+              className="flex w-full min-w-0 flex-col gap-3 sm:flex-row sm:items-center"
+            >
               <input
                 type="password"
                 placeholder="AHS password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="bg-white text-ink placeholder-muted/80 border border-muted/25
-                           rounded px-4 py-2 text-sm focus:outline-none focus:border-brand-gold"
+                className="min-w-0 w-full flex-1 bg-white text-ink placeholder-muted/80 border border-muted/25
+                           rounded px-4 py-2 text-sm focus:outline-none focus:border-brand-gold sm:min-w-[12rem]"
               />
               <button
                 type="submit"
-                className="bg-brand-gold text-ink font-semibold rounded px-4 py-2
-                           text-sm hover:opacity-90 transition-opacity"
+                className="w-full shrink-0 bg-brand-gold text-ink font-semibold rounded px-4 py-2
+                           text-sm hover:opacity-90 transition-opacity sm:w-auto"
               >
                 Decrypt all
               </button>
