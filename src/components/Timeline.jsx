@@ -355,7 +355,7 @@ function LaneRow({ events, laneType, minTime, maxTime }) {
     );
 
     return (
-        <div className="relative h-36 border-b border-white/5 overflow-visible">
+        <div className="relative h-52 border-b border-white/5 overflow-visible">
             {/* Faint EKG pattern */}
             <EkgBackground />
 
@@ -469,7 +469,7 @@ export default function Timeline({ medications = [], interventions = [], visual 
                     {LANES.map(({ key, label }) => (
                         <div
                             key={key}
-                            className="h-36 flex items-center border-b border-white/5 pr-3"
+                            className="h-52 flex items-center border-b border-white/5 pr-3"
                         >
                             <span className="text-white/40 text-xs uppercase tracking-wider leading-snug">
                                 {label}

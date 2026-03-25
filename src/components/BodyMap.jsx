@@ -224,7 +224,7 @@ export default function BodyMap({ visual = {}, sessionId, deviceId }) {
 
       <svg
         viewBox="0 0 200 285"
-        className="w-full max-w-[360px]"
+        className="w-full max-w-[360px] max-h-[70vh]"
         xmlns="http://www.w3.org/2000/svg"
       >
         <defs>
