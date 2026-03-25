@@ -273,18 +273,18 @@ export default function BodyMap({ visual = {}, sessionId, deviceId }) {
         </Region>
 
         <g fill="white" fontSize="7" textAnchor="middle" style={{ pointerEvents: "none" }}>
-          <text x="100" y="22">head</text>
-          <text x="100" y="34">face</text>
-          <text x="100" y="61">neck</text>
-          <text x="100" y="115">torso</text>
-          <text x="50" y="108">arm R</text>
-          <text x="150" y="108">arm L</text>
-          <text x="50" y="160">hand R</text>
-          <text x="150" y="160">hand L</text>
-          <text x="83" y="213">leg R</text>
-          <text x="117" y="213">leg L</text>
-          <text x="83" y="270">foot R</text>
-          <text x="117" y="270">foot L</text>
+          <text x="100" y="22">Head</text>
+          <text x="100" y="34">Face</text>
+          <text x="100" y="61">Neck</text>
+          <text x="100" y="115">Torso</text>
+          <text x="50" y="108">Arm 1</text>
+          <text x="150" y="108">Arm 2</text>
+          <text x="50" y="160">Hand 1</text>
+          <text x="150" y="160">Hand 2</text>
+          <text x="83" y="213">Leg 1</text>
+          <text x="117" y="213">Leg 2</text>
+          <text x="83" y="270">Foot 1</text>
+          <text x="117" y="270">Foot 2</text>
         </g>
       </svg>
 

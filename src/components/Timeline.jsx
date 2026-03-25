@@ -161,17 +161,9 @@ function MedicationTooltip({ event }) {
 }
 
 function InterventionTooltip({ event }) {
-    const entities = event.entity_detected || "";
-    const entitiesArray = entities
-        ? entities.split(';').map(e => e.trim())
-        : [];
-
-    const entitiesText = entitiesArray.join(" • "); 
-
     return (
         <>
             <p className="text-white text-sm font-semibold">{event.event_category || "—"}</p>
-            <p className="text-white text-sm"><span className="text-white/70">Entities:</span>{" "}{entitiesText || "None"}</p>
             <p className="text-brand-gray text-sm mb-1">{event.start_time}</p>
             {event.full_text && (
                 <p className="text-white/50 text-sm leading-snug">
