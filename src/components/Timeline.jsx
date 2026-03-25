@@ -251,8 +251,6 @@ function PortalTooltip({ dotRect, laneType, event }) {
  * On hover, a portal-based tooltip is rendered at document.body level so it
  * escapes any overflow clipping from the scrollable chart container.
  */
-const STAGGER_DELAY_MS = 150;
-
 function Dot({ event, pct, topPct = 50, laneType }) {
     const [hovered, setHovered] = useState(false);
     const dotRef = useRef(null);
@@ -268,10 +266,8 @@ function Dot({ event, pct, topPct = 50, laneType }) {
         setDotRect(null);
     }, []);
 
-    const isNew = event._isNew;
-    const staggerDelay = isNew && event._animIndex != null
-        ? `${event._animIndex * STAGGER_DELAY_MS}ms`
-        : undefined;
+    const shouldAnimate = event._revealIndex != null;
+    const delay = shouldAnimate ? `${event._revealIndex * REVEAL_STAGGER_MS}ms` : undefined;
 
     return (
         <div
@@ -282,8 +278,8 @@ function Dot({ event, pct, topPct = 50, laneType }) {
                 ref={dotRef}
                 className={`w-3 h-3 rounded-full bg-green-400 border-2 border-green-200 shadow-md
                    cursor-pointer hover:scale-150 transition-transform duration-150 z-10 relative
-                   ${isNew ? "animate-dot-reveal" : ""}`}
-                style={isNew ? { opacity: 0, animationDelay: staggerDelay } : undefined}
+                   ${shouldAnimate ? "animate-dot-reveal" : ""}`}
+                style={shouldAnimate ? { opacity: 0, animationDelay: delay } : undefined}
                 onMouseEnter={handleEnter}
                 onMouseLeave={handleLeave}
             />
@@ -400,17 +396,58 @@ const LANES = [
     { key: "injury", label: "Injuries" },
 ];
 
+/** Delay between each new dot's reveal animation */
+const REVEAL_STAGGER_MS = 150;
+
+/**
+ * Track which event IDs we've already rendered. When new IDs appear, tag
+ * them with a stagger index so the Dot component can apply animation-delay.
+ * Returns the event arrays with _revealIndex set on new items.
+ *
+ * All tracking lives inside Timeline via a ref — SessionPage doesn't need
+ * to know about animation at all.
+ */
+function useStaggeredReveal(eventsByLane) {
+    const seenIds = useRef(new Set());
+    const isFirstRender = useRef(true);
+
+    const result = useMemo(() => {
+        const tagged = {};
+        let newIndex = 0;
+
+        for (const [lane, events] of Object.entries(eventsByLane)) {
+            tagged[lane] = events.map((event) => {
+                if (seenIds.current.has(event.id)) {
+                    return event;
+                }
+                seenIds.current.add(event.id);
+                if (isFirstRender.current) {
+                    return event;
+                }
+                return { ...event, _revealIndex: newIndex++ };
+            });
+        }
+
+        isFirstRender.current = false;
+        return tagged;
+    }, [eventsByLane]);
+
+    return result;
+}
+
 export default function Timeline({ medications = [], interventions = [], visual = {} }) {
     const chartRef = useRef(null);
     const [cursorPct, setCursorPct] = useState(null);
     const [cursorTime, setCursorTime] = useState(null);
 
     // Prepare per-lane event arrays
-    const eventsByLane = useMemo(() => ({
+    const rawEventsByLane = useMemo(() => ({
         medication: prepareMedications(medications),
         intervention: prepareInterventions(interventions),
         injury: flattenInjuries(visual),
     }), [medications, interventions, visual]);
+
+    const eventsByLane = useStaggeredReveal(rawEventsByLane);
 
     // Derive shared x-axis bounds across all lanes
     const { minTime, maxTime, hasData } = useMemo(() => {
