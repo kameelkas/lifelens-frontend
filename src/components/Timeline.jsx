@@ -266,9 +266,6 @@ function Dot({ event, pct, topPct = 50, laneType }) {
         setDotRect(null);
     }, []);
 
-    const shouldAnimate = event._revealIndex != null;
-    const delay = shouldAnimate ? `${event._revealIndex * REVEAL_STAGGER_MS}ms` : undefined;
-
     return (
         <div
             className="absolute -translate-y-1/2 -translate-x-1/2"
@@ -276,10 +273,8 @@ function Dot({ event, pct, topPct = 50, laneType }) {
         >
             <div
                 ref={dotRef}
-                className={`w-3 h-3 rounded-full bg-green-400 border-2 border-green-200 shadow-md
-                   cursor-pointer hover:scale-150 transition-transform duration-150 z-10 relative
-                   ${shouldAnimate ? "animate-dot-reveal" : ""}`}
-                style={shouldAnimate ? { opacity: 0, animationDelay: delay } : undefined}
+                className="w-3 h-3 rounded-full bg-green-400 border-2 border-green-200 shadow-md
+                   cursor-pointer hover:scale-150 transition-transform duration-150 z-10 relative"
                 onMouseEnter={handleEnter}
                 onMouseLeave={handleLeave}
             />
@@ -396,59 +391,17 @@ const LANES = [
     { key: "injury", label: "Injuries" },
 ];
 
-/** Delay between each new dot's reveal animation */
-const REVEAL_STAGGER_MS = 150;
-
-/**
- * Track which event IDs have been rendered. New IDs get a _revealIndex so
- * the Dot component can stagger their CSS animation-delay.
- *
- * StrictMode-safe: no refs are mutated inside useMemo. The seenIds ref is
- * only updated in useEffect (which runs once after commit, not during the
- * double-invoked render phase).
- */
-function useStaggeredReveal(eventsByLane) {
-    const prevIdsRef = useRef(null);
-
-    const result = useMemo(() => {
-        const prev = prevIdsRef.current;
-        if (!prev) return eventsByLane;
-
-        const tagged = {};
-        let newIndex = 0;
-        for (const [lane, events] of Object.entries(eventsByLane)) {
-            tagged[lane] = events.map((event) => {
-                if (prev.has(event.id)) return event;
-                return { ...event, _revealIndex: newIndex++ };
-            });
-        }
-        return tagged;
-    }, [eventsByLane]);
-
-    useEffect(() => {
-        const ids = new Set();
-        for (const events of Object.values(eventsByLane)) {
-            for (const event of events) ids.add(event.id);
-        }
-        prevIdsRef.current = ids;
-    }, [eventsByLane]);
-
-    return result;
-}
-
 export default function Timeline({ medications = [], interventions = [], visual = {} }) {
     const chartRef = useRef(null);
     const [cursorPct, setCursorPct] = useState(null);
     const [cursorTime, setCursorTime] = useState(null);
 
     // Prepare per-lane event arrays
-    const rawEventsByLane = useMemo(() => ({
+    const eventsByLane = useMemo(() => ({
         medication: prepareMedications(medications),
         intervention: prepareInterventions(interventions),
         injury: flattenInjuries(visual),
     }), [medications, interventions, visual]);
-
-    const eventsByLane = useStaggeredReveal(rawEventsByLane);
 
     // Derive shared x-axis bounds across all lanes
     const { minTime, maxTime, hasData } = useMemo(() => {
