@@ -22,6 +22,7 @@
  */
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { fetchDecryptedImage } from "../api/client";
 
 const GREY_COLOR = "#6b7280";
@@ -76,11 +77,17 @@ function Region({ regionKey, visual, onHover, onHoverEnd, children }) {
   const state = getRegionState(regionKey, visual);
   const canHover = state.status !== "none";
 
+  const handleEnter = useCallback((e) => {
+    if (!canHover) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    onHover(regionKey, state, rect);
+  }, [canHover, regionKey, state, onHover]);
+
   return (
     <g
       style={{ fill: state.fill, opacity: state.opacity, cursor: canHover ? "pointer" : "default" }}
       className="transition-all duration-500"
-      onMouseEnter={() => canHover && onHover(regionKey, state)}
+      onMouseEnter={handleEnter}
       onMouseLeave={onHoverEnd}
     >
       {children}
@@ -88,11 +95,44 @@ function Region({ regionKey, visual, onHover, onHoverEnd, children }) {
   );
 }
 
-// ── Tooltip — plain HTML div, rendered below the SVG ─────────────────────────
+// ── Portal Tooltip — rendered at document.body to avoid layout shift ─────────
 
-function Tooltip({ label, state, imgSrc, imgLoading }) {
-  return (
-    <div className="w-full mt-2 rounded-lg border border-white/15 bg-brand-navy/95 p-4 shadow-2xl">
+function PortalTooltip({ anchorRect, label, state, imgSrc, imgLoading }) {
+  const tooltipRef = useRef(null);
+  const [pos, setPos] = useState(null);
+
+  useEffect(() => {
+    if (!anchorRect || !tooltipRef.current) return;
+    const tt = tooltipRef.current.getBoundingClientRect();
+    const GAP = 12;
+
+    let left = anchorRect.right + GAP;
+    let top = anchorRect.top;
+
+    if (left + tt.width > window.innerWidth - 8) {
+      left = anchorRect.left - tt.width - GAP;
+    }
+    if (left < 8) left = 8;
+
+    if (top + tt.height > window.innerHeight - 8) {
+      top = window.innerHeight - tt.height - 8;
+    }
+    if (top < 8) top = 8;
+
+    setPos({ top, left });
+  }, [anchorRect, imgSrc, imgLoading]);
+
+  return createPortal(
+    <div
+      ref={tooltipRef}
+      className="fixed z-[9999] rounded-lg border border-white/15 bg-[#0d1829] p-4 shadow-2xl
+                 w-72 max-w-[90vw]"
+      style={{
+        pointerEvents: "none",
+        top: pos ? `${pos.top}px` : "-9999px",
+        left: pos ? `${pos.left}px` : "-9999px",
+      }}
+    >
       <p className="text-white text-sm font-semibold capitalize mb-2">{label}</p>
 
       {state.status === "healthy" && (
@@ -112,39 +152,35 @@ function Tooltip({ label, state, imgSrc, imgLoading }) {
         </ul>
       )}
 
-      {imgLoading && <p className="text-white/30 text-xs">Loading image…</p>}
+      {imgLoading && <p className="text-white/30 text-xs">Loading image...</p>}
       {imgSrc && (
         <img src={imgSrc} alt={label} className="w-full rounded object-contain max-h-48" />
       )}
-    </div>
+    </div>,
+    document.body,
   );
 }
 
 // ── BodyMap ───────────────────────────────────────────────────────────────────
 
 export default function BodyMap({ visual = {}, sessionId, deviceId }) {
-  // Which region is currently hovered: { key, state } or null
   const [active, setActive] = useState(null);
   const [imgSrc, setImgSrc] = useState(null);
   const [imgLoading, setImgLoading] = useState(false);
 
-  // Cache of imageId → blob URL so each image is fetched at most once.
-  // Ref so cache updates don't trigger re-renders.
   const imgCache = useRef({});
 
-  // Revoke all cached blob URLs on unmount
   useEffect(() => {
     const cache = imgCache.current;
     return () => Object.values(cache).forEach((url) => URL.revokeObjectURL(url));
   }, []);
 
-  const handleHover = useCallback((key, state) => {
-    setActive({ key, state });
+  const handleHover = useCallback((key, state, rect) => {
+    setActive({ key, state, rect });
 
     const imageId = state.previewImageId;
     if (!imageId) { setImgSrc(null); return; }
 
-    // Serve from cache if available — no extra network request
     if (imgCache.current[imageId]) {
       setImgSrc(imgCache.current[imageId]);
       return;
@@ -252,9 +288,9 @@ export default function BodyMap({ visual = {}, sessionId, deviceId }) {
         </g>
       </svg>
 
-      {/* Tooltip renders here — below the SVG, in normal document flow */}
       {active && (
-        <Tooltip
+        <PortalTooltip
+          anchorRect={active.rect}
           label={active.key}
           state={active.state}
           imgSrc={imgSrc}
