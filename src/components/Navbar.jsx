@@ -6,7 +6,7 @@ function LogoMark({ logoSrc }) {
   const src = logoSrc || lifelensMark;
 
   return (
-    <div className="h-12 w-12 sm:h-14 sm:w-14 overflow-hidden rounded">
+    <div className="h-12 w-12 sm:h-14 sm:w-14 overflow-hidden rounded-full">
       <img
         src={src}
         alt="LifeLens logo"
