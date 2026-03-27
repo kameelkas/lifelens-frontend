@@ -229,7 +229,7 @@ export default function BodyMap({ visual = {}, sessionId, deviceId }) {
       </div>
 
       {/* Body map */}
-      <div className="relative w-full max-w-[240px] select-none">
+      <div className="relative w-full max-w-[280px] select-none">
         <img
           src="/body-map.png"
           alt="Body map"
