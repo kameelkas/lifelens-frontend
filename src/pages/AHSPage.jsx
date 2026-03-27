@@ -122,80 +122,80 @@ export default function AHSPage() {
 
   return (
     <main className="flex-1 h-full max-w-full px-8 py-10 pb-24">
-        <div className="mb-8 flex min-w-0 flex-col gap-1">
-          <Link
-            to="/ems"
-            className="text-muted text-base hover:text-brand-gold transition-all ease-in-out underline-offset-4 hover:underline whitespace-nowrap w-fit"
-          >
-            ← Sessions
-          </Link>
-          <span className="text-muted/80 text-sm truncate">
-            {formatSessionStartedAt(sessionId)}
-          </span>
-        </div>
+      <div className="mb-8 flex min-w-0 flex-col gap-1">
+        <Link
+          to="/ems"
+          className="text-muted text-base hover:text-brand-gold transition-all ease-in-out underline-offset-4 hover:underline whitespace-nowrap w-fit"
+        >
+          ← Sessions
+        </Link>
+        <span className="text-muted/80 text-sm truncate">
+          {formatSessionStartedAt(sessionId)}
+        </span>
+      </div>
 
-        {/* Password gate */}
-        <div className="mb-8 min-w-0 max-w-5xl bg-white/75 border border-muted/20 rounded-lg px-4 py-4 shadow-sm sm:px-6 sm:py-5">
-          <p className="text-muted text-sm mb-4 break-words">
-            Images are shown anonymized by default. Enter the AHS password to decrypt.
-          </p>
+      {/* Password gate */}
+      <div className="mb-8 min-w-0 max-w-5xl bg-white/75 border border-muted/20 rounded-lg px-4 py-4 shadow-sm sm:px-6 sm:py-5">
+        <p className="text-muted text-sm mb-4 break-words">
+          Images are shown anonymized by default. Enter the AHS password to decrypt.
+        </p>
 
-          {ahsPassword ? (
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-              <p className="text-green-400 text-sm">Images decrypted</p>
-              <button
-                onClick={handleLock}
-                className="text-muted text-sm hover:text-ink transition-colors shrink-0"
-              >
-                Lock
-              </button>
-            </div>
-          ) : (
-            <form
-              onSubmit={handleDecrypt}
-              className="flex w-full min-w-0 flex-col gap-3 sm:flex-row sm:items-center"
+        {ahsPassword ? (
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+            <p className="text-green-400 text-sm">Images decrypted</p>
+            <button
+              onClick={handleLock}
+              className="text-muted text-sm hover:text-ink transition-colors shrink-0"
             >
-              <input
-                type="password"
-                placeholder="AHS password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                className="min-w-0 w-full flex-1 bg-white text-ink placeholder-muted/80 border border-muted/25
-                           rounded px-4 py-2 text-sm focus:outline-none focus:border-brand-gold sm:min-w-[12rem]"
-              />
-              <button
-                type="submit"
-                className="w-full shrink-0 bg-brand-gold text-ink font-semibold rounded px-4 py-2
-                           text-sm hover:opacity-90 transition-opacity sm:w-auto"
-              >
-                Decrypt all
-              </button>
-            </form>
-          )}
-        </div>
-
-        {/* Image grid */}
-        {loading && <p className="text-muted text-sm">Loading...</p>}
-        {error && <p className="text-red-400 text-sm">{error}</p>}
-
-        {!loading && !error && imageIds.length === 0 && (
-          <p className="text-muted text-sm">No images found for this session.</p>
-        )}
-
-        {!loading && !error && imageIds.length > 0 && (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {imageIds.map((id) => (
-              <ImageCard
-                key={id}
-                imageId={id}
-                sessionId={sessionId}
-                deviceId={deviceId}
-                ahsPassword={ahsPassword}
-              />
-            ))}
+              Lock
+            </button>
           </div>
+        ) : (
+          <form
+            onSubmit={handleDecrypt}
+            className="flex w-full min-w-0 flex-col gap-3 sm:flex-row sm:items-center"
+          >
+            <input
+              type="password"
+              placeholder="AHS password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              className="min-w-0 w-full flex-1 bg-white text-ink placeholder-muted/80 border border-muted/25
+                           rounded px-4 py-2 text-sm focus:outline-none focus:border-brand-gold sm:min-w-[12rem]"
+            />
+            <button
+              type="submit"
+              className="w-full shrink-0 bg-brand-gold text-ink font-semibold rounded px-4 py-2
+                           text-sm hover:opacity-90 transition-opacity sm:w-auto"
+            >
+              Decrypt all
+            </button>
+          </form>
         )}
+      </div>
+
+      {/* Image grid */}
+      {loading && <p className="text-muted text-sm">Loading...</p>}
+      {error && <p className="text-red-400 text-sm">{error}</p>}
+
+      {!loading && !error && imageIds.length === 0 && (
+        <p className="text-muted text-sm">No images found for this session.</p>
+      )}
+
+      {!loading && !error && imageIds.length > 0 && (
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          {imageIds.map((id) => (
+            <ImageCard
+              key={id}
+              imageId={id}
+              sessionId={sessionId}
+              deviceId={deviceId}
+              ahsPassword={ahsPassword}
+            />
+          ))}
+        </div>
+      )}
 
     </main>
   );

@@ -27,9 +27,9 @@
 import { useState, useRef, useCallback, useMemo, useEffect } from "react";
 import { createPortal } from "react-dom";
 import {
-  parseWallClockTime,
-  formatSecondsAs12hHm,
-  formatWallClockTimeForDisplay12h,
+    parseWallClockTime,
+    formatSecondsAs12hHm,
+    formatWallClockTimeForDisplay12h,
 } from "../utils/time";
 
 // ── Constants ────────────────────────────────────────────────────────────────
@@ -118,14 +118,14 @@ function EkgBackground({ id }) {
         >
             <defs>
                 <pattern id={`minor-${id}`} width="10" height="10" patternUnits="userSpaceOnUse">
-                    <path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(0,27,58,0.12)" strokeWidth="0.75"/>
+                    <path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(0,27,58,0.12)" strokeWidth="0.75" />
                 </pattern>
                 <pattern id={`major-${id}`} width="50" height="50" patternUnits="userSpaceOnUse">
-                    <rect width="50" height="50" fill={`url(#minor-${id})`}/>
-                    <path d="M 50 0 L 0 0 0 50" fill="none" stroke="rgba(0,27,58,0.25)" strokeWidth="1"/>
+                    <rect width="50" height="50" fill={`url(#minor-${id})`} />
+                    <path d="M 50 0 L 0 0 0 50" fill="none" stroke="rgba(0,27,58,0.25)" strokeWidth="1" />
                 </pattern>
             </defs>
-            <rect width="100%" height="100%" fill={`url(#major-${id})`}/>
+            <rect width="100%" height="100%" fill={`url(#major-${id})`} />
         </svg>
     );
 }
@@ -474,58 +474,58 @@ export default function Timeline({ medications = [], interventions = [], visual 
                             style={chartMinWidth ? { minWidth: `${chartMinWidth}px` } : undefined}
                         >
 
-                        {/* Lane rows + cursor overlay */}
-                        <div
-                            ref={chartRef}
-                            className="relative flex flex-col border-l border-r border-muted/20"
-                            onMouseMove={handleMouseMove}
-                            onMouseLeave={handleMouseLeave}
-                        >
-                            {/* Cursor line — spans full height of all lanes */}
-                            {cursorPct !== null && (
-                                <div
-                                    className="absolute top-0 bottom-0 w-px bg-blue-400/35 pointer-events-none z-20"
-                                    style={{ left: `${cursorPct}%` }}
-                                />
-                            )}
-
-                            {/* Lane rows */}
-                            {LANES.map(({ key }) => (
-                                <LaneRow
-                                    key={key}
-                                    events={eventsByLane[key]}
-                                    laneType={key}
-                                    minTime={minTime}
-                                    maxTime={maxTime}
-                                />
-                            ))}
-                        </div>
-
-                        {/* ── X-axis tick labels (horizontal margin on parent gives room for edge labels) ── */}
-                        {hasData && (
-                            <div className="relative mt-1 min-h-[2.75rem] pb-1">
-                                {ticks.map((tick, i) => (
-                                    <span
-                                        key={i}
-                                        className="absolute top-0 -translate-x-1/2 whitespace-nowrap text-xs sm:text-sm text-muted/80 tabular-nums"
-                                        style={{ left: `${tick.pct}%` }}
-                                    >
-                                        {formatSecondsAs12hHm(tick.time)}
-                                    </span>
-                                ))}
-
-                                {/* Cursor time label — follows the cursor line */}
+                            {/* Lane rows + cursor overlay */}
+                            <div
+                                ref={chartRef}
+                                className="relative flex flex-col border-l border-r border-muted/20"
+                                onMouseMove={handleMouseMove}
+                                onMouseLeave={handleMouseLeave}
+                            >
+                                {/* Cursor line — spans full height of all lanes */}
                                 {cursorPct !== null && (
-                                    <span
-                                        className="absolute top-0 -translate-x-1/2 whitespace-nowrap text-xs sm:text-sm text-ink tabular-nums
-                                            bg-white px-1.5 py-0.5 rounded border border-blue-400/40 pointer-events-none z-20"
+                                    <div
+                                        className="absolute top-0 bottom-0 w-px bg-blue-400/35 pointer-events-none z-20"
                                         style={{ left: `${cursorPct}%` }}
-                                    >
-                                        {formatSecondsAs12hHm(cursorTime)}
-                                    </span>
+                                    />
                                 )}
+
+                                {/* Lane rows */}
+                                {LANES.map(({ key }) => (
+                                    <LaneRow
+                                        key={key}
+                                        events={eventsByLane[key]}
+                                        laneType={key}
+                                        minTime={minTime}
+                                        maxTime={maxTime}
+                                    />
+                                ))}
                             </div>
-                        )}
+
+                            {/* ── X-axis tick labels (horizontal margin on parent gives room for edge labels) ── */}
+                            {hasData && (
+                                <div className="relative mt-1 min-h-[2.75rem] pb-1">
+                                    {ticks.map((tick, i) => (
+                                        <span
+                                            key={i}
+                                            className="absolute top-0 -translate-x-1/2 whitespace-nowrap text-xs sm:text-sm text-muted/80 tabular-nums"
+                                            style={{ left: `${tick.pct}%` }}
+                                        >
+                                            {formatSecondsAs12hHm(tick.time)}
+                                        </span>
+                                    ))}
+
+                                    {/* Cursor time label — follows the cursor line */}
+                                    {cursorPct !== null && (
+                                        <span
+                                            className="absolute top-0 -translate-x-1/2 whitespace-nowrap text-xs sm:text-sm text-ink tabular-nums
+                                            bg-white px-1.5 py-0.5 rounded border border-blue-400/40 pointer-events-none z-20"
+                                            style={{ left: `${cursorPct}%` }}
+                                        >
+                                            {formatSecondsAs12hHm(cursorTime)}
+                                        </span>
+                                    )}
+                                </div>
+                            )}
                         </div>
                     </div>
 

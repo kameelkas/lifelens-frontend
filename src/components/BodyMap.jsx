@@ -20,18 +20,18 @@ const MIN_OPACITY = 0.3;
 // x / y = centre of the circle as % of the image.
 // size  = diameter as % of container width.
 const REGIONS = {
-  head:  { x: 51, y: 8,    size: 12, label: "Head" },
-  face:  { x: 51, y: 13.5,   size: 12, label: "Face" },
-  neck:  { x: 51, y: 21,   size: 10,  label: "Neck" },
-  torso: { x: 50, y: 37,   size: 20, label: "Torso" },
-  arm1:  { x: 28, y: 31,   size: 12, label: "Arm 1" },
-  arm2:  { x: 74, y: 31,   size: 12, label: "Arm 2" },
-  hand1: { x: 12, y: 54,   size: 11, label: "Hand 1" },
-  hand2: { x: 90, y: 54,   size: 11, label: "Hand 2" },
-  leg1:  { x: 40, y: 66,   size: 13, label: "Leg 1" },
-  leg2:  { x: 62, y: 66,   size: 13, label: "Leg 2" },
-  foot1: { x: 36, y: 93,   size: 10, label: "Foot 1" },
-  foot2: { x: 66, y: 93,   size: 10, label: "Foot 2" },
+  head: { x: 51, y: 8, size: 12, label: "Head" },
+  face: { x: 51, y: 13.5, size: 12, label: "Face" },
+  neck: { x: 51, y: 21, size: 10, label: "Neck" },
+  torso: { x: 50, y: 37, size: 20, label: "Torso" },
+  arm1: { x: 28, y: 31, size: 12, label: "Arm 1" },
+  arm2: { x: 74, y: 31, size: 12, label: "Arm 2" },
+  hand1: { x: 12, y: 54, size: 11, label: "Hand 1" },
+  hand2: { x: 90, y: 54, size: 11, label: "Hand 2" },
+  leg1: { x: 40, y: 66, size: 13, label: "Leg 1" },
+  leg2: { x: 62, y: 66, size: 13, label: "Leg 2" },
+  foot1: { x: 36, y: 93, size: 10, label: "Foot 1" },
+  foot2: { x: 66, y: 93, size: 10, label: "Foot 2" },
 };
 
 const REGION_KEYS = Object.keys(REGIONS);

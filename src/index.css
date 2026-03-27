@@ -4,7 +4,8 @@
 
 /* Increase base font size so text is easier to read across the app. */
 html {
-    font-size: 18px; /* Tailwind text-* classes are rem-based, so this scales globally. */
+    font-size: 18px;
+    /* Tailwind text-* classes are rem-based, so this scales globally. */
     min-height: 100vh;
 }
 
@@ -12,17 +13,21 @@ html {
 .timeline-scroll::-webkit-scrollbar {
     height: 6px;
 }
+
 .timeline-scroll::-webkit-scrollbar-track {
     background: rgba(0, 27, 58, 0.08);
     border-radius: 3px;
 }
+
 .timeline-scroll::-webkit-scrollbar-thumb {
     background: rgba(52, 70, 106, 0.3);
     border-radius: 3px;
 }
+
 .timeline-scroll::-webkit-scrollbar-thumb:hover {
     background: rgba(52, 70, 106, 0.45);
 }
+
 .timeline-scroll {
     scrollbar-width: thin;
     scrollbar-color: rgba(52, 70, 106, 0.35) rgba(0, 27, 58, 0.08);

@@ -54,88 +54,88 @@ export default function HomePage({ portalName = "LifeLens", sessionBasePath = "/
 
   return (
     <main className="flex-1 max-w-full px-8 py-10 pb-24">
-        <button
-          onClick={() => navigate("/")}
-          className="text-muted text-base md:text-lg hover:text-brand-gold transition-all ease-in-out underline-offset-4 hover:underline"
-        >
-          ← Portals
-        </button>
-        <h1 className="text-brand-gold text-2xl md:text-4xl text-center font-semibold">{portalName}</h1>
+      <button
+        onClick={() => navigate("/")}
+        className="text-muted text-base md:text-lg hover:text-brand-gold transition-all ease-in-out underline-offset-4 hover:underline"
+      >
+        ← Portals
+      </button>
+      <h1 className="text-brand-gold text-2xl md:text-4xl text-center font-semibold">{portalName}</h1>
 
-        {activeSession && (
-          <div
-            onClick={() => navigate(`${sessionBasePath}/${activeSession.session_id}`)}
-            className="mb-8 flex items-center justify-between bg-brand-gold/10 border
+      {activeSession && (
+        <div
+          onClick={() => navigate(`${sessionBasePath}/${activeSession.session_id}`)}
+          className="mb-8 flex items-center justify-between bg-brand-gold/10 border
                        border-brand-gold/40 rounded-lg px-6 py-4 cursor-pointer
                        hover:bg-brand-gold/20 transition-colors"
-          >
-            <div className="flex items-center gap-3">
-              <span className="relative flex h-3 w-3">
-                <span className="animate-ping absolute inline-flex h-full w-full
+        >
+          <div className="flex items-center gap-3">
+            <span className="relative flex h-3 w-3">
+              <span className="animate-ping absolute inline-flex h-full w-full
                                  rounded-full bg-brand-gold opacity-75" />
-                <span className="relative inline-flex rounded-full h-3 w-3 bg-brand-gold" />
-              </span>
-              <span className="text-brand-gold font-semibold">Live Session Active</span>
-            </div>
-            <span className="text-brand-gold text-sm">View →</span>
+              <span className="relative inline-flex rounded-full h-3 w-3 bg-brand-gold" />
+            </span>
+            <span className="text-brand-gold font-semibold">Live Session Active</span>
           </div>
-        )}
+          <span className="text-brand-gold text-sm">View →</span>
+        </div>
+      )}
 
-        <h2 className="text-muted text-lg font-bold uppercase tracking-widest mb-4">
-          Recent Sessions
-        </h2>
+      <h2 className="text-muted text-lg font-bold uppercase tracking-widest mb-4">
+        Recent Sessions
+      </h2>
 
-        {loading && (
-          <p className="text-muted text-sm">Loading...</p>
-        )}
+      {loading && (
+        <p className="text-muted text-sm">Loading...</p>
+      )}
 
-        {error && (
-          <p className="text-red-400 text-base">{error}</p>
-        )}
+      {error && (
+        <p className="text-red-400 text-base">{error}</p>
+      )}
 
-        {!loading && !error && sessions.length === 0 && (
-          <p className="text-muted text-sm">No sessions recorded yet.</p>
-        )}
+      {!loading && !error && sessions.length === 0 && (
+        <p className="text-muted text-sm">No sessions recorded yet.</p>
+      )}
 
-        {!loading && !error && sessions.length > 0 && (
-          <ul className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-            {sessions.map((session) => (
-              <li
-                key={session.session_id}
-                onClick={() => navigate(`${sessionBasePath}/${session.session_id}`)}
-                className="group bg-white/80 border border-muted/20 rounded-xl p-5 cursor-pointer
+      {!loading && !error && sessions.length > 0 && (
+        <ul className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+          {sessions.map((session) => (
+            <li
+              key={session.session_id}
+              onClick={() => navigate(`${sessionBasePath}/${session.session_id}`)}
+              className="group bg-white/80 border border-muted/20 rounded-xl p-5 cursor-pointer
                            hover:bg-white hover:border-brand-gold/40 transition-all shadow-sm hover:shadow
                            min-h-[140px] flex flex-col justify-between"
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div className="min-w-0">
-                    <p className="text-muted text-sm uppercase tracking-widest">Date</p>
-                    <p className="text-ink text-lg font-semibold mt-1">
-                      {formatLocalDateLabel(session.created_at)}
-                    </p>
-                  </div>
-
-                  <span className="text-muted text-sm group-hover:text-brand-gold transition-colors">
-                    View →
-                  </span>
-                </div>
-
-                <div className="mt-4">
-                  <p className="text-muted text-sm uppercase tracking-widest">
-                    Session Started:
-                  </p>
-                  <p className="text-ink text-base font-medium mt-1">
-                    {formatLocalTimeHourMinute(session.created_at)}
-                  </p>
-
-                  <p className="text-muted text-xs mt-3 truncate">
-                    ID: {session.session_id}
+            >
+              <div className="flex items-start justify-between gap-4">
+                <div className="min-w-0">
+                  <p className="text-muted text-sm uppercase tracking-widest">Date</p>
+                  <p className="text-ink text-lg font-semibold mt-1">
+                    {formatLocalDateLabel(session.created_at)}
                   </p>
                 </div>
-              </li>
-            ))}
-          </ul>
-        )}
+
+                <span className="text-muted text-sm group-hover:text-brand-gold transition-colors">
+                  View →
+                </span>
+              </div>
+
+              <div className="mt-4">
+                <p className="text-muted text-sm uppercase tracking-widest">
+                  Session Started:
+                </p>
+                <p className="text-ink text-base font-medium mt-1">
+                  {formatLocalTimeHourMinute(session.created_at)}
+                </p>
+
+                <p className="text-muted text-xs mt-3 truncate">
+                  ID: {session.session_id}
+                </p>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
 
     </main>
   );
