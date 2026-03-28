@@ -65,7 +65,7 @@ export default function HomePage({ portalName = "LifeLens", sessionBasePath = "/
       {activeSession && (
         <div
           onClick={() => navigate(`${sessionBasePath}/${activeSession.session_id}`)}
-          className="mb-8 flex items-center justify-between bg-brand-gold/10 border
+          className="m-4 flex items-center justify-between bg-brand-gold/10 border
                        border-brand-gold/40 rounded-lg px-6 py-4 cursor-pointer
                        hover:bg-brand-gold/20 transition-colors"
         >

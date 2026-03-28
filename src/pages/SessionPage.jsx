@@ -18,13 +18,16 @@
  *   - On smaller screens they stack vertically (BodyMap above Timeline)
  */
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { fetchMedications, fetchInterventions, fetchVisual, fetchActiveSession } from "../api/client";
 import useSSE from "../hooks/useSSE";
 import BodyMap from "../components/BodyMap";
 import Timeline from "../components/Timeline";
 import { formatSessionStartedAt } from "../utils/sessionDisplay";
+
+/** Keep "Updating…" visible at least this long so fast local fetches don't flash sub-frame. */
+const LIVE_SYNC_MIN_DISPLAY_MS = 280;
 
 export default function SessionPage() {
   const { sessionId } = useParams();
@@ -37,8 +40,50 @@ export default function SessionPage() {
   const [medications, setMedications] = useState([]);
   const [interventions, setInterventions] = useState([]);
   const [isLive, setIsLive] = useState(false);
+  const [liveSyncing, setLiveSyncing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const liveFetchCountRef = useRef(0);
+  const liveSyncStartedAtRef = useRef(0);
+  const liveSyncHideTimeoutRef = useRef(null);
+
+  const trackLiveFetch = (promise) => {
+    if (liveFetchCountRef.current === 0) {
+      if (liveSyncHideTimeoutRef.current != null) {
+        clearTimeout(liveSyncHideTimeoutRef.current);
+        liveSyncHideTimeoutRef.current = null;
+      }
+      liveSyncStartedAtRef.current = Date.now();
+      setLiveSyncing(true);
+    }
+    liveFetchCountRef.current += 1;
+
+    promise.finally(() => {
+      liveFetchCountRef.current -= 1;
+      if (liveFetchCountRef.current > 0) return;
+      liveFetchCountRef.current = 0;
+
+      const elapsed = Date.now() - liveSyncStartedAtRef.current;
+      const remaining = Math.max(0, LIVE_SYNC_MIN_DISPLAY_MS - elapsed);
+
+      if (liveSyncHideTimeoutRef.current != null) {
+        clearTimeout(liveSyncHideTimeoutRef.current);
+      }
+      liveSyncHideTimeoutRef.current = setTimeout(() => {
+        liveSyncHideTimeoutRef.current = null;
+        setLiveSyncing(false);
+      }, remaining);
+    });
+  };
+
+  useEffect(
+    () => () => {
+      if (liveSyncHideTimeoutRef.current != null) {
+        clearTimeout(liveSyncHideTimeoutRef.current);
+      }
+    },
+    [],
+  );
 
   // Initial data load + check if this is the active session
   useEffect(() => {
@@ -69,13 +114,19 @@ export default function SessionPage() {
     if (event.session_id !== sessionId) return;
 
     if (event.data_type === "medx") {
-      fetchMedications(sessionId).then(setMedications).catch(() => { });
+      trackLiveFetch(
+        fetchMedications(sessionId).then(setMedications).catch(() => { }),
+      );
     }
     if (event.data_type === "intervention") {
-      fetchInterventions(sessionId).then(setInterventions).catch(() => { });
+      trackLiveFetch(
+        fetchInterventions(sessionId).then(setInterventions).catch(() => { }),
+      );
     }
     if (event.data_type === "visual") {
-      fetchVisual(sessionId, deviceId).then(setVisual).catch(() => { });
+      trackLiveFetch(
+        fetchVisual(sessionId, deviceId).then(setVisual).catch(() => { }),
+      );
     }
     if (event.data_type === "session_end") {
       setIsLive(false);
@@ -102,6 +153,15 @@ export default function SessionPage() {
 
   return (
     <main className="flex-1 p-6 pb-24 overflow-hidden">
+      {isLive && liveSyncing && (
+        <div
+          className="-mx-6 -mt-6 mb-6 h-0.5 overflow-hidden bg-muted/15"
+          aria-hidden
+        >
+          <div className="h-full w-2/5 rounded-full bg-brand-gold/90 shadow-[0_0_10px_rgb(var(--color-brand-gold)/0.45)] animate-live-sync-bar" />
+        </div>
+      )}
+
       <div className="flex items-start justify-between gap-6 mb-6">
         <div className="flex min-w-0 flex-col gap-1">
           <Link
@@ -116,12 +176,28 @@ export default function SessionPage() {
         </div>
 
         {isLive && (
-          <div className="flex items-center gap-2 flex-shrink-0">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-gold opacity-75" />
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-brand-gold" />
-            </span>
-            <span className="text-brand-gold text-lg font-bold">Live</span>
+          <div className="flex flex-col items-end gap-1 flex-shrink-0">
+            <div className="flex items-center gap-2">
+              {liveSyncing ? (
+                <span
+                  className="inline-block h-2.5 w-2.5 shrink-0 rounded-full border-2 border-brand-gold border-t-transparent animate-spin"
+                  aria-hidden
+                />
+              ) : (
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-gold opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-brand-gold" />
+                </span>
+              )}
+              <span className="text-brand-gold text-lg font-bold">
+                {liveSyncing ? "Updating…" : "Live"}
+              </span>
+            </div>
+            {!liveSyncing && (
+              <span className="text-muted text-xs font-medium animate-pulse">
+                Listening for updates
+              </span>
+            )}
           </div>
         )}
       </div>
