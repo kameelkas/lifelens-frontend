@@ -218,10 +218,13 @@ export default function BodyMap({ visual = {}, sessionId, deviceId }) {
         </span>
       </div>
 
-      {/* Confidence guide */}
+      {/* Confidence guide — ramp is drawn on a light strip so it matches how rgba
+          reads on the body PNG in both themes (pale wash → solid), not ink on app-bg. */}
       <div className="w-full max-w-[200px] flex flex-col items-center gap-1">
         <p className="text-muted text-xs uppercase tracking-widest">Confidence</p>
-        <div className="w-full h-2 rounded-full border border-muted bg-gradient-to-r from-muted/5 via-muted/50 to-muted" />
+        <div className="w-full h-2.5 rounded-full border border-muted/50 bg-white p-px shadow-[inset_0_1px_2px_rgb(0_0_0/0.08)] dark:border-muted/40 dark:bg-zinc-100">
+          <div className="h-full w-full rounded-full bg-gradient-to-r from-slate-700/20 via-slate-700/55 to-slate-800" />
+        </div>
         <div className="w-full flex items-center justify-between text-muted text-xs">
           <span>Lower</span>
           <span>Higher</span>
