@@ -103,8 +103,8 @@ export default function HomePage({ portalName = "LifeLens", sessionBasePath = "/
             <li
               key={session.session_id}
               onClick={() => navigate(`${sessionBasePath}/${session.session_id}`)}
-              className="group bg-white/80 border border-muted/20 rounded-xl p-5 cursor-pointer
-                           hover:bg-white hover:border-brand-gold/40 transition-all shadow-sm hover:shadow
+              className="group bg-surface/80 border border-muted/20 rounded-xl p-5 cursor-pointer
+                           hover:bg-surface hover:border-brand-gold/40 transition-all shadow-sm hover:shadow
                            min-h-[140px] flex flex-col justify-between"
             >
               <div className="flex items-start justify-between gap-4">

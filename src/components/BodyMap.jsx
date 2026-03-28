@@ -103,7 +103,7 @@ function PortalTooltip({ anchorRect, label, state, imgSrc, imgLoading }) {
   return createPortal(
     <div
       ref={tooltipRef}
-      className="fixed z-[9999] rounded-lg border border-muted/20 bg-white p-4 shadow-2xl w-72 max-w-[90vw]"
+      className="fixed z-[9999] rounded-lg border border-muted/20 bg-surface p-4 shadow-2xl w-72 max-w-[90vw]"
       style={{
         pointerEvents: "none",
         top: pos ? `${pos.top}px` : "-9999px",

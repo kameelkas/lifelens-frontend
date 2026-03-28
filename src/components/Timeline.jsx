@@ -118,11 +118,11 @@ function EkgBackground({ id }) {
         >
             <defs>
                 <pattern id={`minor-${id}`} width="10" height="10" patternUnits="userSpaceOnUse">
-                    <path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(0,27,58,0.12)" strokeWidth="0.75" />
+                    <path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgb(var(--color-ink) / 0.12)" strokeWidth="0.75" />
                 </pattern>
                 <pattern id={`major-${id}`} width="50" height="50" patternUnits="userSpaceOnUse">
                     <rect width="50" height="50" fill={`url(#minor-${id})`} />
-                    <path d="M 50 0 L 0 0 0 50" fill="none" stroke="rgba(0,27,58,0.25)" strokeWidth="1" />
+                    <path d="M 50 0 L 0 0 0 50" fill="none" stroke="rgb(var(--color-ink) / 0.25)" strokeWidth="1" />
                 </pattern>
             </defs>
             <rect width="100%" height="100%" fill={`url(#major-${id})`} />
@@ -210,7 +210,7 @@ function PortalTooltip({ dotRect, laneType, event }) {
     return createPortal(
         <div
             ref={tooltipRef}
-            className="fixed z-[9999] bg-white border border-muted/20 rounded-lg p-3 shadow-2xl w-fit max-w-[90vw] break-words"
+            className="fixed z-[9999] bg-surface border border-muted/20 rounded-lg p-3 shadow-2xl w-fit max-w-[90vw] break-words"
             style={{
                 pointerEvents: "none",
                 top: pos ? `${pos.top}px` : "-9999px",
@@ -341,7 +341,7 @@ function LaneRow({ events, laneType, minTime, maxTime }) {
     );
 
     return (
-        <div className="relative border-b border-muted/20 overflow-visible bg-[#FFEECB]" style={{ height: "200px" }}>
+        <div className="relative border-b border-muted/20 overflow-visible bg-surface-alt" style={{ height: "200px" }}>
             <EkgBackground id={laneType} />
 
             {/* Centre guide line */}
@@ -518,7 +518,7 @@ export default function Timeline({ medications = [], interventions = [], visual 
                                     {cursorPct !== null && (
                                         <span
                                             className="absolute top-0 -translate-x-1/2 whitespace-nowrap text-xs sm:text-sm text-ink tabular-nums
-                                            bg-white px-1.5 py-0.5 rounded border border-blue-400/40 pointer-events-none z-20"
+                                            bg-surface px-1.5 py-0.5 rounded border border-blue-400/40 pointer-events-none z-20"
                                             style={{ left: `${cursorPct}%` }}
                                         >
                                             {formatSecondsAs12hHm(cursorTime)}

@@ -72,7 +72,7 @@ function ImageCard({ imageId, sessionId, deviceId, ahsPassword }) {
   const src = decryptedSrc || noiseSrc;
 
   return (
-    <div className="bg-white/75 border border-muted/20 rounded-lg overflow-hidden">
+    <div className="bg-surface/75 border border-muted/20 rounded-lg overflow-hidden">
       <div className="aspect-square bg-app-bg/60 flex items-center justify-center">
         {src
           ? <img src={src} alt={imageId} className="w-full h-full object-contain" />
@@ -135,7 +135,7 @@ export default function AHSPage() {
       </div>
 
       {/* Password gate */}
-      <div className="mb-8 min-w-0 max-w-5xl bg-white/75 border border-muted/20 rounded-lg px-4 py-4 shadow-sm sm:px-6 sm:py-5">
+      <div className="mb-8 min-w-0 max-w-5xl bg-surface/75 border border-muted/20 rounded-lg px-4 py-4 shadow-sm sm:px-6 sm:py-5">
         <p className="text-muted text-sm mb-4 break-words">
           Images are shown anonymized by default. Enter the AHS password to decrypt.
         </p>
@@ -161,7 +161,7 @@ export default function AHSPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="min-w-0 w-full flex-1 bg-white text-ink placeholder-muted/80 border border-muted/25
+              className="min-w-0 w-full flex-1 bg-surface text-ink placeholder-muted/80 border border-muted/25
                            rounded px-4 py-2 text-sm focus:outline-none focus:border-brand-gold sm:min-w-[12rem]"
             />
             <button

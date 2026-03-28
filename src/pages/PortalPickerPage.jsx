@@ -19,8 +19,8 @@ export default function PortalPickerPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
                 <button
                     onClick={() => navigate("/ems")}
-                    className="group flex flex-col items-center gap-5 bg-white/80 border border-muted/20
-                               rounded-2xl px-10 py-16 hover:bg-white hover:border-brand-gold/50
+                    className="group flex flex-col items-center gap-5 bg-surface/80 border border-muted/20
+                               rounded-2xl px-10 py-16 hover:bg-surface hover:border-brand-gold/50
                                transition-all cursor-pointer shadow-sm hover:shadow"
                 >
                     <span className="text-6xl">🚑</span>
@@ -34,8 +34,8 @@ export default function PortalPickerPage() {
 
                 <button
                     onClick={() => navigate("/ahs")}
-                    className="group flex flex-col items-center gap-5 bg-white/80 border border-muted/20
-                               rounded-2xl px-10 py-16 hover:bg-white hover:border-brand-gold/50
+                    className="group flex flex-col items-center gap-5 bg-surface/80 border border-muted/20
+                               rounded-2xl px-10 py-16 hover:bg-surface hover:border-brand-gold/50
                                transition-all cursor-pointer shadow-sm hover:shadow"
                 >
                     <span className="text-6xl">🏥</span>

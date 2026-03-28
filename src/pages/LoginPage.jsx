@@ -40,7 +40,7 @@ export default function LoginPage() {
                 <div className="absolute -bottom-20 -right-16 h-64 w-64 rounded-full bg-muted/20 blur-3xl" />
             </div>
 
-            <div className="relative w-full max-w-md bg-white/85 border border-muted/20 rounded-2xl p-8 sm:p-10 shadow-xl">
+            <div className="relative w-full max-w-md bg-surface/85 border border-muted/20 rounded-2xl p-8 sm:p-10 shadow-xl">
                 <div className="flex flex-col items-center text-center mb-8">
                     <img src={lifelensMark} alt="LifeLens mark" className="h-16 w-18 object-contain mb-4" />
                     <h1 className="text-ink text-3xl font-semibold">LifeLens Data Portal</h1>
@@ -57,7 +57,7 @@ export default function LoginPage() {
                             value={username}
                             onChange={(e) => setUsername(e.target.value)}
                             required
-                            className="mt-1 w-full bg-white text-ink placeholder-muted/80 border border-muted/25
+                            className="mt-1 w-full bg-surface text-ink placeholder-muted/80 border border-muted/25
                             rounded-lg px-4 py-2.5 focus:outline-none focus:border-brand-gold"
                         />
                     </label>
@@ -69,13 +69,13 @@ export default function LoginPage() {
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             required
-                            className="mt-1 w-full bg-white text-ink placeholder-muted/80 border border-muted/25
+                            className="mt-1 w-full bg-surface text-ink placeholder-muted/80 border border-muted/25
                             rounded-lg px-4 py-2.5 focus:outline-none focus:border-brand-gold"
                         />
                     </label>
 
                     {error && (
-                        <p className="text-red-500 text-sm text-center bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+                        <p className="text-red-500 text-sm text-center bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">
                             {error}
                         </p>
                     )}
