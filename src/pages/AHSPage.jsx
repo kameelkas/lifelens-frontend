@@ -13,7 +13,7 @@
  * Route: /ahs/:sessionId?device_id=jetson01
  */
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { fetchImages, fetchImageEncrypted, fetchAHSImage } from "../api/client";
 import { formatSessionStartedAt } from "../utils/sessionDisplay";
@@ -47,6 +47,23 @@ function ImageCard({ imageId, sessionId, deviceId, ahsPassword }) {
   const [decryptedSrc, setDecryptedSrc] = useState(null);
   const [decrypting, setDecrypting] = useState(false);
   const [error, setError] = useState("");
+  const decryptedBlobRef = useRef(null);
+
+  function setDecryptedBlobUrl(nextUrl) {
+    const prev = decryptedBlobRef.current;
+    if (prev?.startsWith("blob:")) URL.revokeObjectURL(prev);
+    decryptedBlobRef.current = nextUrl;
+    setDecryptedSrc(nextUrl);
+  }
+
+  // Revoke any blob URL left when this card unmounts
+  useEffect(() => {
+    return () => {
+      const url = decryptedBlobRef.current;
+      if (url?.startsWith("blob:")) URL.revokeObjectURL(url);
+      decryptedBlobRef.current = null;
+    };
+  }, []);
 
   // Load noise version on mount
   useEffect(() => {
@@ -58,15 +75,29 @@ function ImageCard({ imageId, sessionId, deviceId, ahsPassword }) {
   // Decrypt when ahsPassword is provided
   useEffect(() => {
     if (!ahsPassword) {
-      setDecryptedSrc(null);
+      setDecryptedBlobUrl(null);
+      setDecrypting(false);
       return;
     }
+    let cancelled = false;
     setDecrypting(true);
     setError("");
     fetchAHSImage(sessionId, imageId, deviceId, ahsPassword)
-      .then((src) => setDecryptedSrc(src))
+      .then((src) => {
+        if (cancelled) {
+          URL.revokeObjectURL(src);
+          return;
+        }
+        setDecryptedBlobUrl(src);
+      })
       .catch(() => setError("Decryption failed — check password"))
-      .finally(() => setDecrypting(false));
+      .finally(() => {
+        if (!cancelled) setDecrypting(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, [ahsPassword, sessionId, imageId, deviceId]);
 
   const src = decryptedSrc || noiseSrc;
@@ -124,7 +155,7 @@ export default function AHSPage() {
     <main className="flex-1 h-full max-w-full px-8 py-10 pb-24">
       <div className="mb-8 flex min-w-0 flex-col gap-1">
         <Link
-          to="/ems"
+          to="/ahs"
           className="text-muted text-base hover:text-brand-gold transition-all ease-in-out underline-offset-4 hover:underline whitespace-nowrap w-fit"
         >
           ← Sessions

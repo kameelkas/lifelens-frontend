@@ -5,13 +5,24 @@
 /**
  * Parse a wall-clock time to seconds since midnight.
  * Accepts "HH:MM:SS" (CSV/SQLite) and "YYYY-MM-DD HH:MM:SS" (pred_time, etc.).
- * Returns null if missing or malformed.
+ * Returns null if missing, malformed, or out of range (hour 0–23, minute/second 0–59; seconds may be fractional in [0, 60)).
  */
 export function parseWallClockTime(timeStr) {
   if (!timeStr) return null;
   const timePart = timeStr.includes(" ") ? timeStr.split(" ")[1] : timeStr;
-  const [h, m, s = 0] = timePart.split(":").map(Number);
-  if (Number.isNaN(h) || Number.isNaN(m)) return null;
+  const parts = timePart.split(":");
+  if (parts.length < 2 || parts.length > 3) return null;
+  if (parts.some((p) => p === "")) return null;
+
+  const h = Number(parts[0]);
+  const m = Number(parts[1]);
+  const s = parts.length === 3 ? Number(parts[2]) : 0;
+
+  if (!Number.isFinite(h) || !Number.isFinite(m) || !Number.isFinite(s)) return null;
+  if (!Number.isInteger(h) || h < 0 || h > 23) return null;
+  if (!Number.isInteger(m) || m < 0 || m > 59) return null;
+  if (s < 0 || s >= 60) return null;
+
   return h * 3600 + m * 60 + s;
 }
 
