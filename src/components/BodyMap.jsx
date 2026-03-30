@@ -188,6 +188,8 @@ export default function BodyMap({ visual = {}, sessionId, deviceId }) {
   const [imgLoading, setImgLoading] = useState(false);
 
   const imgCache = useRef({});
+  /** Preview `image_id` we are showing or loading for; ignore stale fetch resolutions. */
+  const pendingPreviewIdRef = useRef(null);
 
   useEffect(() => {
     const cache = imgCache.current;
@@ -204,27 +206,46 @@ export default function BodyMap({ visual = {}, sessionId, deviceId }) {
       setActive({ key, state, rect });
 
       const imageId = state.previewImageId;
-      if (!imageId) { setImgSrc(null); return; }
+      if (!imageId) {
+        pendingPreviewIdRef.current = null;
+        setImgSrc(null);
+        setImgLoading(false);
+        return;
+      }
+
+      pendingPreviewIdRef.current = imageId;
 
       if (imgCache.current[imageId]) {
         setImgSrc(imgCache.current[imageId]);
+        setImgLoading(false);
         return;
       }
 
       setImgSrc(null);
       setImgLoading(true);
       fetchDecryptedImage(sessionId, imageId, deviceId)
-        .then((src) => { imgCache.current[imageId] = src; setImgSrc(src); })
+        .then((src) => {
+          if (pendingPreviewIdRef.current !== imageId) return;
+          imgCache.current[imageId] = src;
+          setImgSrc(src);
+        })
         .catch((err) => {
           console.error(err);
-          setImgSrc(null);
+          if (pendingPreviewIdRef.current === imageId) {
+            setImgSrc(null);
+          }
         })
-        .finally(() => setImgLoading(false));
+        .finally(() => {
+          if (pendingPreviewIdRef.current === imageId) {
+            setImgLoading(false);
+          }
+        });
     },
     [sessionId, deviceId],
   );
 
   const handleHoverEnd = useCallback(() => {
+    pendingPreviewIdRef.current = null;
     setActive(null);
     setImgSrc(null);
     setImgLoading(false);
