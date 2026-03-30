@@ -15,12 +15,12 @@ const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   const [token, setToken] = useState(() => localStorage.getItem("lifelens_token"));
-  const [user,  setUser]  = useState(() => localStorage.getItem("lifelens_user"));
+  const [user, setUser] = useState(() => localStorage.getItem("lifelens_user"));
 
   async function login(username, password) {
     const data = await apiLogin(username, password);
     localStorage.setItem("lifelens_token", data.token);
-    localStorage.setItem("lifelens_user",  data.username);
+    localStorage.setItem("lifelens_user", data.username);
     setToken(data.token);
     setUser(data.username);
   }

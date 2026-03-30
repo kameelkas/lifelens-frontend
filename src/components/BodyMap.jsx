@@ -1,170 +1,395 @@
 /**
  * BodyMap.jsx
  *
- * Renders a simple SVG human body diagram divided into named regions.
- * All regions start green. When injury data arrives, the relevant region
- * turns red with opacity proportional to the confidence score (accuracy).
+ * PNG body diagram with coloured circle indicators on each region.
  *
- * Props:
- *   injuries: array of injury objects from GET /sessions/:id/injuries
- *     [{ body_part, injury_pred, accuracy }, ...]
- *
- * Body part naming convention:
- *   1 = right side, 2 = left side
- *   e.g. arm1 = right arm, arm2 = left arm
- *
- * Region color logic:
- *   - No injury data for region  → green  at full opacity
- *   - injury_pred === "no_injury" → green  at full opacity
- *   - injury detected            → red    at opacity = accuracy (min 0.3 so it's always visible)
+ * Each body part gets a simple round overlay positioned at its centre.
+ *   none    — no circle shown
+ *   healthy — green circle, opacity ∝ confidence
+ *   injured — red circle,  opacity ∝ confidence
  */
 
-const HEALTHY_COLOR = "#22c55e";   // tailwind green-500
-const INJURED_COLOR = "#ef4444";   // tailwind red-500
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { createPortal } from "react-dom";
+import { fetchDecryptedImage } from "../api/client";
+
+const HEALTHY_COLOR = "#22c55e";
+const INJURED_COLOR = "#ef4444";
 const MIN_OPACITY = 0.3;
 
-/**
- * Derive the fill color and opacity for a region from the injuries array.
- * If multiple detections exist for the same body part, use the highest accuracy.
- */
-function getRegionStyle(regionKey, injuries) {
-    const matches = injuries.filter(
-        (i) => i.body_part === regionKey && i.injury_pred !== "no_injury"
-    );
+// x / y = centre of the circle as % of the image.
+// size  = diameter as % of container width.
+const REGIONS = {
+  head: { x: 51, y: 8, size: 12, label: "Head" },
+  face: { x: 51, y: 13.5, size: 12, label: "Face" },
+  neck: { x: 51, y: 21, size: 10, label: "Neck" },
+  torso: { x: 50, y: 37, size: 20, label: "Torso" },
+  arm1: { x: 28, y: 31, size: 12, label: "Arm 1" },
+  arm2: { x: 74, y: 31, size: 12, label: "Arm 2" },
+  hand1: { x: 12, y: 54, size: 11, label: "Hand 1" },
+  hand2: { x: 90, y: 54, size: 11, label: "Hand 2" },
+  leg1: { x: 40, y: 66, size: 13, label: "Leg 1" },
+  leg2: { x: 62, y: 66, size: 13, label: "Leg 2" },
+  foot1: { x: 36, y: 93, size: 10, label: "Foot 1" },
+  foot2: { x: 66, y: 93, size: 10, label: "Foot 2" },
+};
 
-    if (matches.length === 0) {
-        return { fill: HEALTHY_COLOR, opacity: 1 };
+const REGION_KEYS = Object.keys(REGIONS);
+
+// ── State derivation ─────────────────────────────────────────────────────────
+
+function regionAriaLabel(regionLabel, st) {
+  if (st.status === "healthy") {
+    const pct =
+      typeof st.confidence === "number" ? `, confidence ${(st.confidence * 100).toFixed(0)} percent` : "";
+    return `${regionLabel}, no injuries detected${pct}`;
+  }
+  if (st.status === "injured") {
+    const primary = st.allInjuries?.[0]?.type ?? "unknown";
+    const pct =
+      typeof st.confidence === "number" ? `, confidence ${(st.confidence * 100).toFixed(0)} percent` : "";
+    const more =
+      Array.isArray(st.allInjuries) && st.allInjuries.length > 1
+        ? `, ${st.allInjuries.length - 1} additional injuries`
+        : "";
+    return `${regionLabel}, injury detected: ${primary.replace(/_/g, " ")}${pct}${more}`;
+  }
+  return regionLabel;
+}
+
+function getRegionState(regionKey, visual) {
+  const part = visual?.[regionKey];
+
+  if (!part?.injuries) {
+    return { status: "none", allInjuries: [], previewImageId: null };
+  }
+
+  const entries = Object.entries(part.injuries);
+  if (entries.length === 0) {
+    return { status: "none", allInjuries: [], previewImageId: null };
+  }
+
+  const noInjuryEntry = entries.find(([type]) => type === "no_injury");
+  const realInjuries = entries
+    .filter(([type]) => type !== "no_injury")
+    .map(([type, data]) => ({ type, ...data }));
+
+  if (realInjuries.length === 0) {
+    return {
+      status: "healthy",
+      allInjuries: [],
+      confidence: noInjuryEntry?.[1]?.accuracy ?? null,
+      previewImageId: noInjuryEntry?.[1]?.image_id ?? null,
+    };
+  }
+
+  const best = realInjuries.reduce((a, b) => (a.accuracy > b.accuracy ? a : b));
+  return {
+    status: "injured",
+    allInjuries: realInjuries,
+    confidence: best.accuracy ?? null,
+    previewImageId: best.image_id ?? null,
+  };
+}
+
+// ── Portal Tooltip ───────────────────────────────────────────────────────────
+
+function PortalTooltip({ anchorRect, label, state, imgSrc, imgLoading }) {
+  const tooltipRef = useRef(null);
+  const [pos, setPos] = useState(null);
+
+  useEffect(() => {
+    if (!anchorRect || !tooltipRef.current) return;
+    const tt = tooltipRef.current.getBoundingClientRect();
+    const GAP = 12;
+
+    let left = anchorRect.right + GAP;
+    let top = anchorRect.top;
+
+    if (left + tt.width > window.innerWidth - 8) {
+      left = anchorRect.left - tt.width - GAP;
     }
+    if (left < 8) left = 8;
 
-    const best = matches.reduce((a, b) => (a.accuracy > b.accuracy ? a : b));
-    const opacity = Math.max(MIN_OPACITY, best.accuracy ?? MIN_OPACITY);
+    if (top + tt.height > window.innerHeight - 8) {
+      top = window.innerHeight - tt.height - 8;
+    }
+    if (top < 8) top = 8;
 
-    return { fill: INJURED_COLOR, opacity };
+    setPos({ top, left });
+  }, [anchorRect, imgSrc, imgLoading]);
+
+  return createPortal(
+    <div
+      ref={tooltipRef}
+      className="fixed z-[9999] rounded-lg border border-muted/20 bg-surface p-4 shadow-2xl w-72 max-w-[90vw]"
+      style={{
+        pointerEvents: "none",
+        top: pos ? `${pos.top}px` : "-9999px",
+        left: pos ? `${pos.left}px` : "-9999px",
+      }}
+    >
+      <p className="text-ink text-sm font-semibold capitalize mb-2">{label}</p>
+
+      {state.status === "healthy" && (
+        <p className="text-[#22c55e] text-sm mb-3">
+          No injuries detected
+          {typeof state.confidence === "number" && (
+            <span className="text-muted text-sm ml-2">
+              ({(state.confidence * 100).toFixed(0)}%)
+            </span>
+          )}
+        </p>
+      )}
+
+      {state.status === "injured" && (
+        <p className="text-muted text-sm mb-3">
+          Injury Detected:{" "}
+          <span className="capitalize text-[#ef4444]">
+            {state.allInjuries?.[0]?.type ?? "Unknown"}
+          </span>{" "}
+          {typeof state.confidence === "number" && (
+            <span className="text-muted text-sm">
+              ({(state.confidence * 100).toFixed(0)}%)
+            </span>
+          )}
+          {Array.isArray(state.allInjuries) && state.allInjuries.length > 1 && (
+            <span className="text-muted text-sm ml-2">
+              +{state.allInjuries.length - 1} more
+            </span>
+          )}
+        </p>
+      )}
+
+      {imgLoading && <p className="text-muted/80 text-sm">Loading image...</p>}
+      {imgSrc && (
+        <img
+          src={imgSrc}
+          alt={
+            state.status === "injured"
+              ? `Injury image for ${label}`
+              : state.status === "healthy"
+                ? `Reference image for healthy ${label} region`
+                : `Preview image for ${label}`
+          }
+          className="w-full rounded object-contain max-h-48"
+        />
+      )}
+    </div>,
+    document.body,
+  );
 }
 
-/**
- * A single labeled SVG region.
- * Renders a shape with the computed color + opacity, and a small text label.
- */
-function Region({ label, injuries, children }) {
-    const style = getRegionStyle(label, injuries);
-    return (
-        <g style={{ fill: style.fill, opacity: style.opacity }} className="transition-all duration-500">
-            {children}
-        </g>
-    );
-}
+// ── BodyMap ──────────────────────────────────────────────────────────────────
 
-export default function BodyMap({ injuries = [] }) {
-    const r = (key) => ({ label: key, injuries });
+export default function BodyMap({ visual = {}, sessionId, deviceId }) {
+  const [active, setActive] = useState(null);
+  const [imgSrc, setImgSrc] = useState(null);
+  const [imgLoading, setImgLoading] = useState(false);
 
-    return (
-        <div className="flex flex-col items-center gap-3">
-            <h2 className="text-white/60 text-sm uppercase tracking-widest">Body Map</h2>
+  const imgCache = useRef({});
+  /** Preview `image_id` we are showing or loading for; ignore stale fetch resolutions. */
+  const pendingPreviewIdRef = useRef(null);
 
-            {/* Legend */}
-            <div className="flex items-center gap-6 text-xs text-brand-gray mb-2">
-                <span className="flex items-center gap-1">
-                    <span className="inline-block w-3 h-3 rounded-full bg-green-500" /> Healthy
-                </span>
-                <span className="flex items-center gap-1">
-                    <span className="inline-block w-3 h-3 rounded-full bg-red-500" /> Injury detected
-                </span>
-            </div>
+  useEffect(() => {
+    const cache = imgCache.current;
+    return () => Object.values(cache).forEach((url) => URL.revokeObjectURL(url));
+  }, []);
 
-            {/*
-        SVG coordinate space: 200 wide x 480 tall
-        All shapes are simple primitives — easy to adjust.
-        viewBox is set so it scales responsively inside its container.
+  const regionStates = useMemo(
+    () => Object.fromEntries(REGION_KEYS.map((k) => [k, getRegionState(k, visual)])),
+    [visual],
+  );
 
-        Layout (top to bottom):
-          head, face, neck, torso
-          arm1 (right) + arm2 (left) beside torso
-          hand1 (right) + hand2 (left)
-          leg1 (right) + leg2 (left)
-          foot1 (right) + foot2 (left)
-      */}
-            <svg
-                viewBox="0 0 200 480"
-                className="w-48"
-                xmlns="http://www.w3.org/2000/svg"
-            >
-                {/* HEAD */}
-                <Region {...r("head")}>
-                    <ellipse cx="100" cy="30" rx="28" ry="20" />
-                </Region>
+  const handleHover = useCallback(
+    (key, state, rect) => {
+      setActive({ key, state, rect });
 
-                {/* FACE — smaller ellipse overlaid on head */}
-                <Region {...r("face")}>
-                    <ellipse cx="100" cy="32" rx="18" ry="14" />
-                </Region>
+      const imageId = state.previewImageId;
+      if (!imageId) {
+        pendingPreviewIdRef.current = null;
+        setImgSrc(null);
+        setImgLoading(false);
+        return;
+      }
 
-                {/* NECK */}
-                <Region {...r("neck")}>
-                    <rect x="88" y="50" width="24" height="16" rx="4" />
-                </Region>
+      pendingPreviewIdRef.current = imageId;
 
-                {/* TORSO */}
-                <Region {...r("torso")}>
-                    <rect x="68" y="66" width="64" height="90" rx="6" />
-                </Region>
+      if (imgCache.current[imageId]) {
+        setImgSrc(imgCache.current[imageId]);
+        setImgLoading(false);
+        return;
+      }
 
-                {/* ARM1 — right arm (viewer's left) */}
-                <Region {...r("arm1")}>
-                    <rect x="36" y="66" width="28" height="80" rx="10" />
-                </Region>
+      setImgSrc(null);
+      setImgLoading(true);
+      fetchDecryptedImage(sessionId, imageId, deviceId)
+        .then((src) => {
+          if (pendingPreviewIdRef.current !== imageId) return;
+          imgCache.current[imageId] = src;
+          setImgSrc(src);
+        })
+        .catch((err) => {
+          console.error(err);
+          if (pendingPreviewIdRef.current === imageId) {
+            setImgSrc(null);
+          }
+        })
+        .finally(() => {
+          if (pendingPreviewIdRef.current === imageId) {
+            setImgLoading(false);
+          }
+        });
+    },
+    [sessionId, deviceId],
+  );
 
-                {/* ARM2 — left arm (viewer's right) */}
-                <Region {...r("arm2")}>
-                    <rect x="136" y="66" width="28" height="80" rx="10" />
-                </Region>
+  const handleHoverEnd = useCallback(() => {
+    pendingPreviewIdRef.current = null;
+    setActive(null);
+    setImgSrc(null);
+    setImgLoading(false);
+  }, []);
 
-                {/* HAND1 — right hand */}
-                <Region {...r("hand1")}>
-                    <ellipse cx="50" cy="158" rx="14" ry="10" />
-                </Region>
+  return (
+    <div className="flex flex-col items-center gap-2 w-full">
+      <h2 className="text-muted text-lg font-bold uppercase tracking-widest pb-4">Body Map</h2>
 
-                {/* HAND2 — left hand */}
-                <Region {...r("hand2")}>
-                    <ellipse cx="150" cy="158" rx="14" ry="10" />
-                </Region>
+      {/* Legend */}
+      <div className="flex items-center gap-3 text-sm text-muted flex-wrap justify-center mb-1">
+        <span className="flex items-center gap-1">
+          <span className="inline-block w-3 h-3 rounded-full bg-gray-500" />
+          No data
+        </span>
+        <span className="flex items-center gap-1">
+          <span className="inline-block w-3 h-3 rounded-full" style={{ background: HEALTHY_COLOR }} />
+          Healthy
+        </span>
+        <span className="flex items-center gap-1">
+          <span className="inline-block w-3 h-3 rounded-full" style={{ background: INJURED_COLOR }} />
+          Injury
+        </span>
+      </div>
 
-                {/* LEG1 — right leg */}
-                <Region {...r("leg1")}>
-                    <rect x="70" y="160" width="26" height="100" rx="10" />
-                </Region>
-
-                {/* LEG2 — left leg */}
-                <Region {...r("leg2")}>
-                    <rect x="104" y="160" width="26" height="100" rx="10" />
-                </Region>
-
-                {/* FOOT1 — right foot */}
-                <Region {...r("foot1")}>
-                    <ellipse cx="83" cy="268" rx="18" ry="10" />
-                </Region>
-
-                {/* FOOT2 — left foot */}
-                <Region {...r("foot2")}>
-                    <ellipse cx="117" cy="268" rx="18" ry="10" />
-                </Region>
-
-                {/* Region labels — always white, small, centered on each region */}
-                <g fill="white" fontSize="7" textAnchor="middle" style={{ pointerEvents: "none" }}>
-                    <text x="100" y="22">head</text>
-                    <text x="100" y="34">face</text>
-                    <text x="100" y="61">neck</text>
-                    <text x="100" y="115">torso</text>
-                    <text x="50" y="108">arm R</text>
-                    <text x="150" y="108">arm L</text>
-                    <text x="50" y="160">hand R</text>
-                    <text x="150" y="160">hand L</text>
-                    <text x="83" y="213">leg R</text>
-                    <text x="117" y="213">leg L</text>
-                    <text x="83" y="270">foot R</text>
-                    <text x="117" y="270">foot L</text>
-                </g>
-            </svg>
+      {/* Confidence guide — ramp is drawn on a light strip so it matches how rgba
+          reads on the body PNG in both themes (pale wash → solid), not ink on app-bg. */}
+      <div className="w-full max-w-[200px] flex flex-col items-center gap-1">
+        <p className="text-muted text-xs uppercase tracking-widest">Confidence</p>
+        <div className="w-full h-2.5 rounded-full border border-muted/50 bg-white p-px shadow-[inset_0_1px_2px_rgb(0_0_0/0.08)] dark:border-muted/40 dark:bg-zinc-100">
+          <div className="h-full w-full rounded-full bg-gradient-to-r from-slate-700/20 via-slate-700/55 to-slate-800" />
         </div>
-    );
+        <div className="w-full flex items-center justify-between text-muted text-xs">
+          <span>Lower</span>
+          <span>Higher</span>
+        </div>
+      </div>
+
+      {/* Body map */}
+      <div className="relative w-full max-w-[280px] select-none">
+        <img
+          src="/body-map.png"
+          alt="Human body diagram for locating injury regions"
+          className="w-full h-auto"
+          draggable={false}
+        />
+
+        {/* One circle per region */}
+        {REGION_KEYS.map((key) => {
+          const region = REGIONS[key];
+          const st = regionStates[key];
+          const canHover = st.status !== "none";
+
+          let bg = "transparent";
+          let opacity = 0;
+          if (st.status === "healthy") {
+            bg = HEALTHY_COLOR;
+            opacity = Math.max(MIN_OPACITY, st.confidence ?? MIN_OPACITY);
+          } else if (st.status === "injured") {
+            bg = INJURED_COLOR;
+            opacity = Math.max(MIN_OPACITY, st.confidence ?? MIN_OPACITY);
+          }
+
+          if (active?.key === key) {
+            opacity = Math.min(1, opacity + 0.15);
+          }
+
+          const commonStyle = {
+            left: `${region.x}%`,
+            top: `${region.y}%`,
+            width: `${region.size}%`,
+            aspectRatio: "1",
+            transform: "translate(-50%, -50%)",
+            backgroundColor: bg,
+            opacity,
+            cursor: canHover ? "pointer" : "default",
+            pointerEvents: canHover ? "auto" : "none",
+          };
+
+          if (!canHover) {
+            return (
+              <div
+                key={key}
+                className="absolute rounded-full transition-all duration-500 flex items-center justify-center"
+                style={commonStyle}
+                aria-hidden
+              >
+                <span className="text-white text-[8px] font-bold leading-none text-center pointer-events-none drop-shadow-sm">
+                  {region.label}
+                </span>
+              </div>
+            );
+          }
+
+          return (
+            <div
+              key={key}
+              role="button"
+              tabIndex={0}
+              aria-label={regionAriaLabel(region.label, st)}
+              aria-expanded={active?.key === key}
+              className="absolute rounded-full transition-all duration-500 flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold focus-visible:ring-offset-2 focus-visible:ring-offset-app-bg"
+              style={commonStyle}
+              onMouseEnter={(e) => {
+                handleHover(key, st, e.currentTarget.getBoundingClientRect());
+              }}
+              onMouseLeave={handleHoverEnd}
+              onFocus={(e) => {
+                handleHover(key, st, e.currentTarget.getBoundingClientRect());
+              }}
+              onBlur={handleHoverEnd}
+              onKeyDown={(e) => {
+                if (e.key === "Escape") {
+                  e.preventDefault();
+                  handleHoverEnd();
+                  e.currentTarget.blur();
+                  return;
+                }
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  handleHover(key, st, e.currentTarget.getBoundingClientRect());
+                }
+              }}
+            >
+              <span
+                className="text-white text-[8px] font-bold leading-none text-center pointer-events-none drop-shadow-sm"
+                aria-hidden
+              >
+                {region.label}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+
+      {active && (
+        <PortalTooltip
+          anchorRect={active.rect}
+          label={REGIONS[active.key]?.label ?? active.key}
+          state={active.state}
+          imgSrc={imgSrc}
+          imgLoading={imgLoading}
+        />
+      )}
+    </div>
+  );
 }

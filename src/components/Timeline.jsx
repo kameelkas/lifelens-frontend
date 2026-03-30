@@ -1,109 +1,542 @@
 /**
  * Timeline.jsx
  *
- * Renders a chronological list of interventions and medications.
- * Entries are merged and sorted by start_time.
- * Text fields are green with opacity proportional to confidence score.
- * Missing fields (dosage, route) are shown in gray.
+ * Three-lane swimlane timeline sharing a single time-aligned x-axis.
+ *
+ *   Medications  │  ●              ●         ●
+ *   Interventions│     ●     ●          ●
+ *   Injuries     │        ●        ●              ●
+ *                └──10:55────11:00────11:05────11:10──▶
  *
  * Props:
  *   medications:    array from GET /sessions/:id/medications
  *   interventions:  array from GET /sessions/:id/interventions
+ *   visual:         parsed visual_output.json — injuries are extracted from this
+ *
+ * Time parsing:
+ *   - medications / interventions use `start_time` ("HH:MM:SS" or "YYYY-MM-DD HH:MM:SS")
+ *   - injuries use `pred_time` from each injury entry in visual_output.json
+ *     (same "YYYY-MM-DD HH:MM:SS" format — only the time part is used)
+ *
+ * Multiple injuries per body part:
+ *   Each injury becomes a separate dot on the Injuries lane. Injuries on the same
+ *   body part captured in the same frame share a pred_time and will overlap on the
+ *   x-axis; the tooltip differentiates them by injury type and confidence.
  */
 
-const MIN_OPACITY = 0.4;
+import { useState, useRef, useCallback, useMemo, useEffect } from "react";
+import { createPortal } from "react-dom";
+import {
+    parseWallClockTime,
+    formatSecondsAs12hHm,
+    formatWallClockTimeForDisplay12h,
+} from "../utils/time";
 
-function confidenceOpacity(score) {
-    if (score == null) return 1;
-    return Math.max(MIN_OPACITY, score);
-}
+// ── Constants ────────────────────────────────────────────────────────────────
+
+/** Left/right padding expressed as a % of the chart width, so edge dots aren't clipped */
+const EDGE_PAD_PCT = 6;
+
+/** Number of tick labels on the x-axis */
+const TICK_COUNT = 5;
+
+/** Pixels per minute of session time — keeps a constant x-axis scale */
+const PX_PER_MINUTE = 12;
+
+/** Absolute floor width (px) so short sessions still have a usable chart */
+const MIN_CHART_PX = 600;
 
 /**
- * A single medication entry.
+ * Per-lane dot colors (from project palettes — cool / natural, not the vibrant gold accent).
+ * fill: main dot; border: slightly lighter ring for contrast on cream lane backgrounds.
  */
-function MedicationEntry({ item }) {
-    const medOpacity = confidenceOpacity(item.medication_confidence);
-    const dosOpacity = confidenceOpacity(item.dosage_confidence);
-    const rteOpacity = confidenceOpacity(item.route_confidence);
+const LANE_DOT_COLORS = {
+    medication: { fill: "#34466A", border: "#5A6B88" },
+    intervention: { fill: "#877555", border: "#A89678" },
+    injury: { fill: "#693740", border: "#8B5C62" },
+};
+
+// ── Time utilities (parsing / HMS formatting: ../utils/time) ─────────────────
+
+/**
+ * Map a time value to an x-axis percentage, respecting edge padding.
+ * When minTime === maxTime (single event), centres the dot.
+ */
+function timeToPct(time, minTime, maxTime) {
+    if (minTime === maxTime) return 50;
+    return EDGE_PAD_PCT + ((time - minTime) / (maxTime - minTime)) * (100 - 2 * EDGE_PAD_PCT);
+}
+
+// ── Data preparation ──────────────────────────────────────────────────────────
+
+/**
+ * Flatten visual_output.json into individual injury events for the timeline.
+ * no_injury entries are excluded — this lane only shows real detections.
+ * Events with an unparseable pred_time are silently dropped.
+ */
+function flattenInjuries(visual) {
+    const events = [];
+    Object.entries(visual || {}).forEach(([bodyPart, partData]) => {
+        Object.entries(partData?.injuries ?? {}).forEach(([injuryType, data]) => {
+            if (injuryType === "no_injury") return;
+            const time = parseWallClockTime(data.pred_time);
+            if (time === null) return;
+            events.push({
+                id: `${bodyPart}-${injuryType}-${data.pred_time}`,
+                time,
+                bodyPart,
+                injuryType,
+                accuracy: data.accuracy,
+                image_id: data.image_id,
+                pred_time: data.pred_time,
+            });
+        });
+    });
+    return events;
+}
+
+function prepareMedications(meds) {
+    return meds
+        .map((m) => ({ ...m, time: parseWallClockTime(m.start_time) }))
+        .filter((e) => e.time !== null);
+}
+
+function prepareInterventions(interventions) {
+    return interventions
+        .map((i) => ({ ...i, time: parseWallClockTime(i.start_time) }))
+        .filter((e) => e.time !== null);
+}
+
+// ── EKG graph-paper background ─────────────────────────────────────────────
+// Use a simple repeating background so it always fills the full chart width
+// (no "cutoff" at the right edge), and keep it subtle but readable.
+function EkgBackground({ id }) {
+    return (
+        <svg
+            className="absolute inset-0 w-full h-full pointer-events-none z-0"
+            xmlns="http://www.w3.org/2000/svg"
+        >
+            <defs>
+                <pattern id={`minor-${id}`} width="10" height="10" patternUnits="userSpaceOnUse">
+                    <path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgb(var(--color-ink) / 0.12)" strokeWidth="0.75" />
+                </pattern>
+                <pattern id={`major-${id}`} width="50" height="50" patternUnits="userSpaceOnUse">
+                    <rect width="50" height="50" fill={`url(#minor-${id})`} />
+                    <path d="M 50 0 L 0 0 0 50" fill="none" stroke="rgb(var(--color-ink) / 0.25)" strokeWidth="1" />
+                </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill={`url(#major-${id})`} />
+        </svg>
+    );
+}
+
+// ── Tooltips ──────────────────────────────────────────────────────────────────
+
+function MedicationTooltip({ event }) {
+    return (
+        <>
+            <p className="text-ink text-base font-bold leading-tight capitalize">{event.medication || "—"}</p>
+            <p className="text-muted text-sm mb-1">Administered at: <b>{formatWallClockTimeForDisplay12h(event.start_time)}</b></p>
+            {event.dosage && (
+                <p className="text-muted text-sm break-words">Dose: <b>{event.dosage}</b></p>
+            )}
+            {event.route && (
+                <p className="text-muted text-sm break-words capitalize">Route: <b>{event.route}</b></p>
+            )}
+            {event.medication_confidence != null && (
+                <p className="text-muted  text-sm mt-1">
+                    Confidence: <b>{(event.medication_confidence * 100).toFixed(0)}%</b>
+                </p>
+            )}
+        </>
+    );
+}
+
+function InterventionTooltip({ event }) {
+    return (
+        <>
+            <p className="text-ink text-base font-bold leading-tight">{event.event_category || "—"}</p>
+            <p className="text-muted text-sm mb-1">Intervention began at: <b>{formatWallClockTimeForDisplay12h(event.start_time)}</b></p>
+            {event.full_text && (
+                <p className="text-muted text-sm leading-snug max-w-[300px]">
+                    {event.full_text}
+                </p>
+            )}
+        </>
+    );
+}
+
+function InjuryTooltip({ event }) {
+    return (
+        <>
+            <p className="text-ink text-base font-bold leading-tight capitalize">{event.bodyPart}</p>
+            <p className="text-muted text-sm break-words">Injury Type: <b>{event.injuryType}</b></p>
+            <p className="text-muted text-sm mb-1">Injury First Detected At: <b>{formatWallClockTimeForDisplay12h(event.pred_time)}</b></p>
+            {event.accuracy != null && (
+                <p className="text-muted text-sm">
+                    Confidence: <b>{(event.accuracy * 100).toFixed(0)}%</b>
+                </p>
+            )}
+        </>
+    );
+}
+
+// ── Portal Tooltip ────────────────────────────────────────────────────────────
+
+/**
+ * Tooltip rendered via createPortal at document.body so it is never clipped
+ * by any ancestor overflow container.  Positioned in viewport coordinates
+ * based on the dot's bounding rect.
+ */
+function PortalTooltip({ dotRect, laneType, event }) {
+    const tooltipRef = useRef(null);
+    const [pos, setPos] = useState(null);
+
+    useEffect(() => {
+        if (!dotRect || !tooltipRef.current) return;
+        const tt = tooltipRef.current.getBoundingClientRect();
+        const GAP = 10;
+
+        let top = dotRect.top - tt.height - GAP;
+        let left = dotRect.left + dotRect.width / 2 - tt.width / 2;
+
+        if (top < 4) top = dotRect.bottom + GAP;
+        if (left < 4) left = 4;
+        if (left + tt.width > window.innerWidth - 4) left = window.innerWidth - tt.width - 4;
+
+        setPos({ top, left });
+    }, [dotRect]);
+
+    return createPortal(
+        <div
+            ref={tooltipRef}
+            className="fixed z-[9999] bg-surface border border-muted/20 rounded-lg p-3 shadow-2xl w-fit max-w-[90vw] break-words"
+            style={{
+                pointerEvents: "none",
+                top: pos ? `${pos.top}px` : "-9999px",
+                left: pos ? `${pos.left}px` : "-9999px",
+            }}
+        >
+            {laneType === "medication" && <MedicationTooltip event={event} />}
+            {laneType === "intervention" && <InterventionTooltip event={event} />}
+            {laneType === "injury" && <InjuryTooltip event={event} />}
+        </div>,
+        document.body,
+    );
+}
+
+// ── Dot ───────────────────────────────────────────────────────────────────────
+
+/**
+ * A single event marker dot.
+ * On hover, a portal-based tooltip is rendered at document.body level so it
+ * escapes any overflow clipping from the scrollable chart container.
+ */
+function Dot({ event, pct, topPct = 50, laneType, dotColors }) {
+    const [hovered, setHovered] = useState(false);
+    const dotRef = useRef(null);
+    const [dotRect, setDotRect] = useState(null);
+
+    const handleEnter = useCallback(() => {
+        setHovered(true);
+        if (dotRef.current) setDotRect(dotRef.current.getBoundingClientRect());
+    }, []);
+
+    const handleLeave = useCallback(() => {
+        setHovered(false);
+        setDotRect(null);
+    }, []);
 
     return (
-        <div className="flex flex-col gap-1">
-            <div className="flex items-center gap-2">
-                <span className="text-xs text-brand-gray uppercase tracking-wider">Medication</span>
-                <span className="text-xs text-brand-gray">{item.start_time}</span>
-            </div>
+        <div
+            className="absolute -translate-y-1/2 -translate-x-1/2"
+            style={{ left: `${pct}%`, top: `${topPct}%` }}
+        >
+            <div
+                ref={dotRef}
+                className="w-4 h-4 rounded-full border-2 shadow-md
+                   cursor-pointer hover:scale-150 transition-transform duration-150 z-10 relative"
+                style={{
+                    backgroundColor: dotColors.fill,
+                    borderColor: dotColors.border,
+                }}
+                onMouseEnter={handleEnter}
+                onMouseLeave={handleLeave}
+            />
 
-            {/* Medication name */}
-            <p
-                className="text-sm font-medium"
-                style={{ color: "#22c55e", opacity: medOpacity }}
-            >
-                {item.medication}
-            </p>
-
-            {/* Dosage and route on same line */}
-            <div className="flex gap-3 text-sm">
-                {item.dosage
-                    ? <span style={{ color: "#22c55e", opacity: dosOpacity }}>{item.dosage}</span>
-                    : <span className="text-brand-gray">No dosage</span>
-                }
-                {item.route
-                    ? <span style={{ color: "#22c55e", opacity: rteOpacity }}>via {item.route}</span>
-                    : <span className="text-brand-gray">No route</span>
-                }
-            </div>
+            {hovered && dotRect && (
+                <PortalTooltip dotRect={dotRect} laneType={laneType} event={event} />
+            )}
         </div>
     );
 }
 
+// ── LaneRow ───────────────────────────────────────────────────────────────────
+
+/** Top/bottom padding (%) inside the lane so dots don't touch the edges */
+const LANE_PAD_PCT = 10;
+
 /**
- * A single intervention entry.
+ * X-axis proximity threshold (% of chart width). Dots closer than this
+ * on the x-axis are considered overlapping and will be fanned out vertically.
+ * 3% catches dots a few seconds apart on a typical session.
  */
-function InterventionEntry({ item }) {
+const DOT_PROXIMITY_PCT = 3;
+
+/**
+ * Group events whose x-positions are within DOT_PROXIMITY_PCT of each other
+ * and compute a vertical offset (topPct) for each so they fan out within the
+ * lane instead of stacking invisibly.
+ *
+ * Uses a sweep-line approach on the sorted pct values: consecutive events
+ * within the threshold are merged into the same group (chaining — if A
+ * overlaps B and B overlaps C, all three form one group).
+ *
+ * Single events sit at 50%. Groups of N are evenly distributed between
+ * LANE_PAD_PCT and (100 - LANE_PAD_PCT).
+ */
+function assignVerticalOffsets(events, minTime, maxTime) {
+    if (events.length === 0) return [];
+
+    const items = events
+        .map((event) => ({ event, pct: timeToPct(event.time, minTime, maxTime) }))
+        .sort((a, b) => a.pct - b.pct);
+
+    const groups = [[items[0]]];
+
+    for (let i = 1; i < items.length; i++) {
+        const current = groups[groups.length - 1];
+        const groupMaxPct = current[current.length - 1].pct;
+        if (items[i].pct - groupMaxPct < DOT_PROXIMITY_PCT) {
+            current.push(items[i]);
+        } else {
+            groups.push([items[i]]);
+        }
+    }
+
+    const result = [];
+    for (const group of groups) {
+        if (group.length === 1) {
+            result.push({ event: group[0].event, topPct: 50 });
+        } else {
+            const usable = 100 - 2 * LANE_PAD_PCT;
+            group.forEach((item, i) => {
+                const topPct = LANE_PAD_PCT + (i / (group.length - 1)) * usable;
+                result.push({ event: item.event, topPct });
+            });
+        }
+    }
+    return result;
+}
+
+/**
+ * One horizontal lane row in the chart area (no label — labels are in a
+ * separate fixed column so they stay aligned during x-axis interaction).
+ */
+function LaneRow({ events, laneType, minTime, maxTime }) {
+    const dotColors = LANE_DOT_COLORS[laneType];
+    const positioned = useMemo(
+        () => assignVerticalOffsets(events, minTime, maxTime),
+        [events, minTime, maxTime],
+    );
+
     return (
-        <div className="flex flex-col gap-1">
-            <div className="flex items-center gap-2">
-                <span className="text-xs text-brand-gray uppercase tracking-wider">Intervention</span>
-                <span className="text-xs text-brand-gray">{item.start_time}</span>
-            </div>
-            <p className="text-sm font-medium text-green-400">
-                {item.event_category}
-            </p>
-            <p className="text-sm text-white/60">
-                {item.full_text}
-            </p>
+        <div className="relative border-b border-muted/20 overflow-visible bg-surface-alt" style={{ height: "200px" }}>
+            <EkgBackground id={laneType} />
+
+            {/* Centre guide line */}
+            <div className="absolute inset-x-0 top-1/2 h-px bg-ink/25 pointer-events-none z-10" />
+
+            {/* Event dots */}
+            {positioned.map(({ event, topPct }) => (
+                <Dot
+                    key={event.id}
+                    event={event}
+                    pct={timeToPct(event.time, minTime, maxTime)}
+                    topPct={topPct}
+                    laneType={laneType}
+                    dotColors={dotColors}
+                />
+            ))}
+
+            {events.length === 0 && (
+                <span className="flex h-full -translate-y-1/4 items-center justify-center
+                         text-muted text-sm select-none pointer-events-none">
+                    No data
+                </span>
+            )}
         </div>
     );
 }
 
-export default function Timeline({ medications = [], interventions = [] }) {
-    // Merge and sort all entries by start_time
-    const entries = [
-        ...medications.map((m) => ({ ...m, _type: "medication" })),
-        ...interventions.map((i) => ({ ...i, _type: "intervention" })),
-    ].sort((a, b) => a.start_time.localeCompare(b.start_time));
+// ── Timeline ──────────────────────────────────────────────────────────────────
+
+const LANES = [
+    { key: "medication", label: "Medications" },
+    { key: "intervention", label: "Interventions" },
+    { key: "injury", label: "Injuries" },
+];
+
+export default function Timeline({ medications = [], interventions = [], visual = {} }) {
+    const chartRef = useRef(null);
+    const [cursorPct, setCursorPct] = useState(null);
+    const [cursorTime, setCursorTime] = useState(null);
+
+    // Prepare per-lane event arrays
+    const eventsByLane = useMemo(() => ({
+        medication: prepareMedications(medications),
+        intervention: prepareInterventions(interventions),
+        injury: flattenInjuries(visual),
+    }), [medications, interventions, visual]);
+
+    // Derive shared x-axis bounds across all lanes
+    const { minTime, maxTime, hasData } = useMemo(() => {
+        const allTimes = Object.values(eventsByLane)
+            .flat()
+            .map((e) => e.time)
+            .filter((t) => t != null);
+
+        if (allTimes.length === 0) return { minTime: 0, maxTime: 0, hasData: false };
+        return {
+            minTime: Math.min(...allTimes),
+            maxTime: Math.max(...allTimes),
+            hasData: true,
+        };
+    }, [eventsByLane]);
+
+    // Minimum chart width so the x-axis never compresses as data grows.
+    // The chart scrolls horizontally when this exceeds the container width.
+    const chartMinWidth = useMemo(() => {
+        if (!hasData) return 0;
+        const rangeMinutes = (maxTime - minTime) / 60;
+        return Math.max(MIN_CHART_PX, Math.ceil(rangeMinutes * PX_PER_MINUTE));
+    }, [hasData, minTime, maxTime]);
+
+    // X-axis tick labels (evenly spaced)
+    const ticks = useMemo(() => {
+        if (!hasData) return [];
+        return Array.from({ length: TICK_COUNT }, (_, i) => {
+            const t = minTime === maxTime
+                ? minTime
+                : minTime + (i / (TICK_COUNT - 1)) * (maxTime - minTime);
+            return { time: t, pct: timeToPct(t, minTime, maxTime) };
+        });
+    }, [hasData, minTime, maxTime]);
+
+    // Track mouse for the vertical cursor line
+    const handleMouseMove = useCallback((e) => {
+        if (!chartRef.current) return;
+        const rect = chartRef.current.getBoundingClientRect();
+        const rawPct = Math.max(0, Math.min((e.clientX - rect.left) / rect.width, 1)) * 100;
+        setCursorPct(rawPct);
+
+        // Map cursor % back to a wall-clock time value (clamped to data range)
+        const t = minTime + ((rawPct - EDGE_PAD_PCT) / (100 - 2 * EDGE_PAD_PCT)) * (maxTime - minTime);
+        setCursorTime(Math.max(minTime, Math.min(maxTime, t)));
+    }, [minTime, maxTime]);
+
+    const handleMouseLeave = useCallback(() => {
+        setCursorPct(null);
+        setCursorTime(null);
+    }, []);
 
     return (
-        <div className="flex flex-col gap-3">
-            <h2 className="text-white/60 text-sm uppercase tracking-widest">Timeline</h2>
+        <div className="flex flex-col gap-1 w-full overflow-hidden">
+            <h2 className="text-muted text-center text-lg font-bold uppercase tracking-widest mb-3">Timeline</h2>
 
-            {entries.length === 0 && (
-                <p className="text-brand-gray text-sm">No entries yet.</p>
+            {!hasData && (
+                <p className="text-muted text-center text-sm">No timeline data yet.</p>
             )}
 
-            <ul className="flex flex-col gap-3">
-                {entries.map((entry) => (
-                    <li
-                        key={`${entry._type}-${entry.id}`}
-                        className="bg-white/5 border border-white/10 rounded-lg px-5 py-4"
-                    >
-                        {entry._type === "medication"
-                            ? <MedicationEntry item={entry} />
-                            : <InterventionEntry item={entry} />
-                        }
-                    </li>
-                ))}
-            </ul>
+            <div className="flex w-full">
+
+                {/* ── Fixed label column ─────────────────────────────────────────── */}
+                <div className="flex-shrink-0 w-28 flex flex-col">
+                    {LANES.map(({ key, label }) => (
+                        <div
+                            key={key}
+                            className="flex items-center border-b border-muted/40 pr-0" style={{ height: "200px" }}
+                        >
+                            <span className="text-muted text-base font-semibold tracking-wider">
+                                {label}
+                            </span>
+                        </div>
+                    ))}
+                    {/* Spacer matching x-axis row height */}
+                    <div className="min-h-[2.75rem]" aria-hidden />
+                </div>
+
+                {/* ── Chart area — scrolls horizontally when content exceeds container ── */}
+                <div className="flex-1 min-w-0">
+                    <div className="overflow-x-auto timeline-scroll overflow-y-hidden">
+                        <div
+                            className="flex flex-col ml-0 mr-4 sm:mr-6 md:mr-8"
+                            style={chartMinWidth ? { minWidth: `${chartMinWidth}px` } : undefined}
+                        >
+
+                            {/* Lane rows + cursor overlay */}
+                            <div
+                                ref={chartRef}
+                                className="relative flex flex-col border-l border-r border-muted/20"
+                                onMouseMove={handleMouseMove}
+                                onMouseLeave={handleMouseLeave}
+                            >
+                                {/* Cursor line — spans full height of all lanes */}
+                                {cursorPct !== null && (
+                                    <div
+                                        className="absolute top-0 bottom-0 w-px bg-blue-400/35 pointer-events-none z-20"
+                                        style={{ left: `${cursorPct}%` }}
+                                    />
+                                )}
+
+                                {/* Lane rows */}
+                                {LANES.map(({ key }) => (
+                                    <LaneRow
+                                        key={key}
+                                        events={eventsByLane[key]}
+                                        laneType={key}
+                                        minTime={minTime}
+                                        maxTime={maxTime}
+                                    />
+                                ))}
+                            </div>
+
+                            {/* ── X-axis tick labels (horizontal margin on parent gives room for edge labels) ── */}
+                            {hasData && (
+                                <div className="relative mt-1 min-h-[2.75rem] pb-1">
+                                    {ticks.map((tick, i) => (
+                                        <span
+                                            key={i}
+                                            className="absolute top-0 -translate-x-1/2 whitespace-nowrap text-xs sm:text-sm text-muted/80 tabular-nums"
+                                            style={{ left: `${tick.pct}%` }}
+                                        >
+                                            {formatSecondsAs12hHm(tick.time)}
+                                        </span>
+                                    ))}
+
+                                    {/* Cursor time label — follows the cursor line */}
+                                    {cursorPct !== null && (
+                                        <span
+                                            className="absolute top-0 -translate-x-1/2 whitespace-nowrap text-xs sm:text-sm text-ink tabular-nums
+                                            bg-surface px-1.5 py-0.5 rounded border border-blue-400/40 pointer-events-none z-20"
+                                            style={{ left: `${cursorPct}%` }}
+                                        >
+                                            {formatSecondsAs12hHm(cursorTime)}
+                                        </span>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* "Time" axis label (kept outside the scroller so it doesn't move) */}
+                    {hasData && (
+                        <p className="text-center text-base text-muted uppercase font-semibold tracking-widest mt-0.5">
+                            Time
+                        </p>
+                    )}
+                </div>
+            </div>
         </div>
     );
 }

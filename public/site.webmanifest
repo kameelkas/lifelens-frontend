@@ -1,0 +1,23 @@
+{
+  "name": "LifeLens",
+  "short_name": "LifeLens",
+  "description": "LifeLens medical session monitoring and review",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#E4F0FF",
+  "theme_color": "#001B3A",
+  "icons": [
+    {
+      "src": "/android-chrome-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/android-chrome-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

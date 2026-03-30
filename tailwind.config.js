@@ -4,11 +4,22 @@ export default {
   theme: {
     extend: {
       colors: {
-        // LifeLens brand palette — use these names everywhere, never raw hex
-        "brand-navy":  "#34466A",
-        "brand-gold":  "#D7A319",
-        "brand-gray":  "#717787",
-        "brand-red":   "#370A16",
+        "app-bg":      "rgb(var(--color-app-bg) / <alpha-value>)",
+        "ink":         "rgb(var(--color-ink) / <alpha-value>)",
+        "muted":       "rgb(var(--color-muted) / <alpha-value>)",
+        "brand-gold":  "rgb(var(--color-brand-gold) / <alpha-value>)",
+        "brand-red":   "rgb(var(--color-brand-red) / <alpha-value>)",
+        "surface":     "rgb(var(--color-surface) / <alpha-value>)",
+        "surface-alt": "rgb(var(--color-surface-alt) / <alpha-value>)",
+      },
+      keyframes: {
+        "live-sync-bar": {
+          "0%": { transform: "translateX(-100%)" },
+          "100%": { transform: "translateX(350%)" },
+        },
+      },
+      animation: {
+        "live-sync-bar": "live-sync-bar 1.35s ease-in-out infinite",
       },
     },
   },
