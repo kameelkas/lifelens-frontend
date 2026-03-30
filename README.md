@@ -1,6 +1,6 @@
 # LifeLens Frontend
 
-Single-page app for **real-time medical session monitoring** and related workflows. It talks to a **separate backend** over HTTP (REST + Server-Sent Events). This repository contains **only the React UI**.
+Single-page app for **real-time medical session monitoring** and related workflows. It talks to a **separate backend** over HTTP (REST + Server-Sent Events). This repository contains **only the React UI**. This web application was designed to work in tandem with the 2025-2026 University of Calgary final year engineering capstone project 'LifeLens'. Please find that [here](https://github.com/uofc-ai2lab/LifeLens).
 
 ## Features
 
