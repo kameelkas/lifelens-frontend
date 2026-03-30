@@ -25,7 +25,10 @@ function authHeaders() {
 async function request(path, options = {}) {
   const res = await fetch(`${BASE_URL}${path}`, options);
   if (!res.ok) {
-    const body = await res.json().catch(() => ({}));
+    const body = await res.json().catch((err) => {
+      console.error(err);
+      return {};
+    });
     throw new Error(body.detail ?? `Request failed: ${res.status}`);
   }
   return res.json();

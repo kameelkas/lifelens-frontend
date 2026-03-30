@@ -69,7 +69,10 @@ function ImageCard({ imageId, sessionId, deviceId, ahsPassword }) {
   useEffect(() => {
     fetchImageEncrypted(sessionId, imageId, deviceId)
       .then((buffer) => setNoiseSrc(encryptedBytesToNoiseUrl(buffer)))
-      .catch(() => setError("Failed to load image"));
+      .catch((err) => {
+        console.error(err);
+        setError("Failed to load image");
+      });
   }, [imageId, sessionId, deviceId]);
 
   // Decrypt when ahsPassword is provided
@@ -90,7 +93,10 @@ function ImageCard({ imageId, sessionId, deviceId, ahsPassword }) {
         }
         setDecryptedBlobUrl(src);
       })
-      .catch(() => setError("Decryption failed — check password"))
+      .catch((err) => {
+        console.error(err);
+        setError("Decryption failed — check password");
+      })
       .finally(() => {
         if (!cancelled) setDecrypting(false);
       });
@@ -137,7 +143,10 @@ export default function AHSPage() {
   useEffect(() => {
     fetchImages(sessionId, deviceId)
       .then((data) => setImageIds(data.images))
-      .catch((err) => setError(err.message ?? "Failed to load session data"))
+      .catch((err) => {
+        console.error(err);
+        setError(err.message ?? "Failed to load session data");
+      })
       .finally(() => setLoading(false));
   }, [sessionId]);
 

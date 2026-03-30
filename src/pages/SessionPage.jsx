@@ -91,9 +91,18 @@ export default function SessionPage() {
       try {
         const [active, meds, intervents, injs] = await Promise.all([
           fetchActiveSession(),
-          fetchMedications(sessionId).catch(() => []),
-          fetchInterventions(sessionId).catch(() => []),
-          fetchVisual(sessionId, deviceId).catch(() => ({})),
+          fetchMedications(sessionId).catch((err) => {
+            console.error(err);
+            return [];
+          }),
+          fetchInterventions(sessionId).catch((err) => {
+            console.error(err);
+            return [];
+          }),
+          fetchVisual(sessionId, deviceId).catch((err) => {
+            console.error(err);
+            return {};
+          }),
         ]);
 
         setIsLive(active.session_id === sessionId);
@@ -116,17 +125,23 @@ export default function SessionPage() {
 
     if (event.data_type === "medx") {
       trackLiveFetch(
-        fetchMedications(sessionId).then(setMedications).catch(() => { }),
+        fetchMedications(sessionId).then(setMedications).catch((err) => {
+          console.error(err);
+        }),
       );
     }
     if (event.data_type === "intervention") {
       trackLiveFetch(
-        fetchInterventions(sessionId).then(setInterventions).catch(() => { }),
+        fetchInterventions(sessionId).then(setInterventions).catch((err) => {
+          console.error(err);
+        }),
       );
     }
     if (event.data_type === "visual") {
       trackLiveFetch(
-        fetchVisual(sessionId, deviceId).then(setVisual).catch(() => { }),
+        fetchVisual(sessionId, deviceId).then(setVisual).catch((err) => {
+          console.error(err);
+        }),
       );
     }
     if (event.data_type === "session_end") {

@@ -186,7 +186,10 @@ export default function BodyMap({ visual = {}, sessionId, deviceId }) {
       setImgLoading(true);
       fetchDecryptedImage(sessionId, imageId, deviceId)
         .then((src) => { imgCache.current[imageId] = src; setImgSrc(src); })
-        .catch(() => setImgSrc(null))
+        .catch((err) => {
+          console.error(err);
+          setImgSrc(null);
+        })
         .finally(() => setImgLoading(false));
     },
     [sessionId, deviceId],

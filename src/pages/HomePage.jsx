@@ -48,7 +48,9 @@ export default function HomePage({ portalName = "LifeLens", sessionBasePath = "/
     }
     if (event.data_type === "session_end") {
       setActiveSession(null);
-      fetchSessions().then(setSessions).catch(() => { });
+      fetchSessions().then(setSessions).catch((err) => {
+        console.error(err);
+      });
     }
   });
 
