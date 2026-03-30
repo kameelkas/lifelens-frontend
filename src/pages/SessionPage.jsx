@@ -109,7 +109,8 @@ export default function SessionPage() {
     load();
   }, [sessionId]);
 
-  // SSE — re-fetch only the data type that changed
+  // SSE — re-fetch only the data type that changed.
+  // useSSE invokes the latest callback via a ref (not a stale mount closure), so sessionId/deviceId match the current route after navigation.
   useSSE((event) => {
     if (event.session_id !== sessionId) return;
 

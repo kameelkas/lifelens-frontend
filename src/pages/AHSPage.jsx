@@ -10,7 +10,7 @@
  *   3. AHS user enters password → each image fetches decrypted version from server
  *      The password is sent as AHS-Password header — never stored anywhere
  *
- * Route: /ahs/:sessionId?device_id=jetson01
+ * Route: /ahs/:sessionId?device_id={DEVICE_ID}. We get device_id from session_id.
  */
 
 import { useEffect, useRef, useState } from "react";
