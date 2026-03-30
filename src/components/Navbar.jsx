@@ -7,7 +7,7 @@ function LogoMark({ logoSrc }) {
   const src = logoSrc || lifelensMark;
 
   return (
-    <div className="h-12 w-12 sm:h-14 sm:w-14 overflow-hidden rounded-full">
+    <div className="h-9 w-9 shrink-0 overflow-hidden rounded-full sm:h-12 sm:w-12 md:h-14 md:w-14">
       <img
         src={src}
         alt="LifeLens logo"
@@ -45,30 +45,33 @@ export default function Navbar() {
   const { token, user, logout } = useAuth();
 
   return (
-    <header className="sticky top-0 z-50 bg-transparent backdrop-blur-3xl sm:px-8 px-2 py-1">
-      <div className="w-full flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+    <header className="sticky top-0 z-50 border-b border-ink/10 bg-app-bg/90 px-3 py-2 backdrop-blur-md dark:border-white/10 sm:px-8 sm:py-2.5">
+      <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-2 sm:gap-4">
         <Link
-          to='/'
-          className="flex items-center hover:opacity-90 transition-opacity min-w-0"
+          to="/"
+          className="flex min-w-0 flex-1 items-center gap-2 hover:opacity-90 transition-opacity sm:flex-initial sm:gap-3"
         >
           <LogoMark />
-          <span className="ml-3 text-brand-gold text-2xl font-semibold whitespace-nowrap">
+          <span className="truncate text-xl font-semibold text-brand-gold sm:text-2xl">
             LifeLens
           </span>
         </Link>
 
-        <div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-4">
+        <div className="flex shrink-0 items-center gap-1.5 sm:gap-3 md:gap-4">
           <ThemeToggle />
           {token && (
             <>
-              <span className="text-muted text-sm sm:text-base whitespace-nowrap capitalize">
-                <span className="hidden sm:inline">User: </span>
-                <b className="font-semibold text-lg">{user}</b>
+              <span
+                className="min-w-0 max-w-[5.5rem] truncate text-left text-muted capitalize sm:max-w-[10rem] text-sm md:max-w-[14rem] lg:max-w-xs"
+                title={user || undefined}
+              >
+                <span className="hidden md:inline">User: </span>
+                <b className="font-semibold text-ink">{user}</b>
               </span>
               <button
                 type="button"
                 onClick={logout}
-                className="text-muted text-lg hover:text-brand-gold transition-all duration-300 ease-in-out hover:underline underline-offset-4 whitespace-nowrap"
+                className="rounded-lg px-2.5 py-2 text-sm font-medium text-muted transition-colors hover:bg-ink/5 hover:text-brand-gold dark:hover:bg-white/10 sm:px-3 sm:py-2 sm:text-base sm:hover:bg-transparent sm:hover:underline sm:underline-offset-4"
               >
                 Sign out
               </button>
