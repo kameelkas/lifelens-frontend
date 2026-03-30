@@ -38,6 +38,25 @@ const REGION_KEYS = Object.keys(REGIONS);
 
 // ── State derivation ─────────────────────────────────────────────────────────
 
+function regionAriaLabel(regionLabel, st) {
+  if (st.status === "healthy") {
+    const pct =
+      typeof st.confidence === "number" ? `, confidence ${(st.confidence * 100).toFixed(0)} percent` : "";
+    return `${regionLabel}, no injuries detected${pct}`;
+  }
+  if (st.status === "injured") {
+    const primary = st.allInjuries?.[0]?.type ?? "unknown";
+    const pct =
+      typeof st.confidence === "number" ? `, confidence ${(st.confidence * 100).toFixed(0)} percent` : "";
+    const more =
+      Array.isArray(st.allInjuries) && st.allInjuries.length > 1
+        ? `, ${st.allInjuries.length - 1} additional injuries`
+        : "";
+    return `${regionLabel}, injury detected: ${primary.replace(/_/g, " ")}${pct}${more}`;
+  }
+  return regionLabel;
+}
+
 function getRegionState(regionKey, visual) {
   const part = visual?.[regionKey];
 
@@ -144,7 +163,17 @@ function PortalTooltip({ anchorRect, label, state, imgSrc, imgLoading }) {
 
       {imgLoading && <p className="text-muted/80 text-sm">Loading image...</p>}
       {imgSrc && (
-        <img src={imgSrc} alt={label} className="w-full rounded object-contain max-h-48" />
+        <img
+          src={imgSrc}
+          alt={
+            state.status === "injured"
+              ? `Injury image for ${label}`
+              : state.status === "healthy"
+                ? `Reference image for healthy ${label} region`
+                : `Preview image for ${label}`
+          }
+          className="w-full rounded object-contain max-h-48"
+        />
       )}
     </div>,
     document.body,
@@ -238,7 +267,7 @@ export default function BodyMap({ visual = {}, sessionId, deviceId }) {
       <div className="relative w-full max-w-[280px] select-none">
         <img
           src="/body-map.png"
-          alt="Body map"
+          alt="Human body diagram for locating injury regions"
           className="w-full h-auto"
           draggable={false}
         />
@@ -263,28 +292,67 @@ export default function BodyMap({ visual = {}, sessionId, deviceId }) {
             opacity = Math.min(1, opacity + 0.15);
           }
 
+          const commonStyle = {
+            left: `${region.x}%`,
+            top: `${region.y}%`,
+            width: `${region.size}%`,
+            aspectRatio: "1",
+            transform: "translate(-50%, -50%)",
+            backgroundColor: bg,
+            opacity,
+            cursor: canHover ? "pointer" : "default",
+            pointerEvents: canHover ? "auto" : "none",
+          };
+
+          if (!canHover) {
+            return (
+              <div
+                key={key}
+                className="absolute rounded-full transition-all duration-500 flex items-center justify-center"
+                style={commonStyle}
+                aria-hidden
+              >
+                <span className="text-white text-[8px] font-bold leading-none text-center pointer-events-none drop-shadow-sm">
+                  {region.label}
+                </span>
+              </div>
+            );
+          }
+
           return (
             <div
               key={key}
-              className="absolute rounded-full transition-all duration-500 flex items-center justify-center"
-              style={{
-                left: `${region.x}%`,
-                top: `${region.y}%`,
-                width: `${region.size}%`,
-                aspectRatio: "1",
-                transform: "translate(-50%, -50%)",
-                backgroundColor: bg,
-                opacity,
-                cursor: canHover ? "pointer" : "default",
-                pointerEvents: canHover ? "auto" : "none",
-              }}
+              role="button"
+              tabIndex={0}
+              aria-label={regionAriaLabel(region.label, st)}
+              aria-expanded={active?.key === key}
+              className="absolute rounded-full transition-all duration-500 flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold focus-visible:ring-offset-2 focus-visible:ring-offset-app-bg"
+              style={commonStyle}
               onMouseEnter={(e) => {
-                if (!canHover) return;
                 handleHover(key, st, e.currentTarget.getBoundingClientRect());
               }}
               onMouseLeave={handleHoverEnd}
+              onFocus={(e) => {
+                handleHover(key, st, e.currentTarget.getBoundingClientRect());
+              }}
+              onBlur={handleHoverEnd}
+              onKeyDown={(e) => {
+                if (e.key === "Escape") {
+                  e.preventDefault();
+                  handleHoverEnd();
+                  e.currentTarget.blur();
+                  return;
+                }
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  handleHover(key, st, e.currentTarget.getBoundingClientRect());
+                }
+              }}
             >
-              <span className="text-white text-[8px] font-bold leading-none text-center pointer-events-none drop-shadow-sm">
+              <span
+                className="text-white text-[8px] font-bold leading-none text-center pointer-events-none drop-shadow-sm"
+                aria-hidden
+              >
                 {region.label}
               </span>
             </div>
@@ -295,7 +363,7 @@ export default function BodyMap({ visual = {}, sessionId, deviceId }) {
       {active && (
         <PortalTooltip
           anchorRect={active.rect}
-          label={active.key}
+          label={REGIONS[active.key]?.label ?? active.key}
           state={active.state}
           imgSrc={imgSrc}
           imgLoading={imgLoading}

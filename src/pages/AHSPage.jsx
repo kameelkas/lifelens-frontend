@@ -108,11 +108,17 @@ function ImageCard({ imageId, sessionId, deviceId, ahsPassword }) {
 
   const src = decryptedSrc || noiseSrc;
 
+  const imageAlt = decryptedSrc
+    ? `Decrypted clinical image for AHS review (reference: ${imageId})`
+    : noiseSrc
+      ? `Anonymized session image preview (reference: ${imageId})`
+      : "";
+
   return (
     <div className="bg-surface/75 border border-muted/20 rounded-lg overflow-hidden">
       <div className="aspect-square bg-app-bg/60 flex items-center justify-center">
         {src
-          ? <img src={src} alt={imageId} className="w-full h-full object-contain" />
+          ? <img src={src} alt={imageAlt} className="w-full h-full object-contain" />
           : <p className="text-muted text-sm">Loading...</p>
         }
       </div>
@@ -152,7 +158,8 @@ export default function AHSPage() {
 
   function handleDecrypt(e) {
     e.preventDefault();
-    setAhsPassword(password);  // triggers useEffect in each ImageCard
+    setAhsPassword(password); // triggers useEffect in each ImageCard
+    setPassword(""); // secret no longer duplicated in form state; ahsPassword kept until Lock
   }
 
   function handleLock() {
