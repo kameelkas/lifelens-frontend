@@ -18,13 +18,15 @@
  *   - On smaller screens they stack vertically (BodyMap above Timeline)
  */
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { fetchMedications, fetchInterventions, fetchVisual, fetchActiveSession } from "../api/client";
 import useSSE from "../hooks/useSSE";
 import BodyMap from "../components/BodyMap";
+import SessionReviewExportModal from "../components/SessionReviewExportModal";
 import Timeline from "../components/Timeline";
 import { formatSessionStartedAt } from "../utils/sessionDisplay";
+import { normalizeVisualDuplicateLimbs } from "../utils/normalizeVisualDuplicateLimbs";
 
 /** Keep "Updating…" visible at least this long so fast local fetches don't flash sub-frame. */
 const LIVE_SYNC_MIN_DISPLAY_MS = 280;
@@ -43,6 +45,9 @@ export default function SessionPage() {
   const [liveSyncing, setLiveSyncing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [reviewExportOpen, setReviewExportOpen] = useState(false);
+  /** TEMP: Jetson duplicate limb workaround — see normalizeVisualDuplicateLimbs.js */
+  const displayVisual = useMemo(() => normalizeVisualDuplicateLimbs(visual), [visual]);
   const liveFetchCountRef = useRef(0);
   const liveSyncStartedAtRef = useRef(0);
   const liveSyncHideTimeoutRef = useRef(null);
@@ -191,8 +196,17 @@ export default function SessionPage() {
           </span>
         </div>
 
+        <div className="flex flex-col items-end gap-2 flex-shrink-0">
+          <button
+            type="button"
+            onClick={() => setReviewExportOpen(true)}
+            className="rounded-lg border border-muted/30 bg-surface-alt px-3 py-1.5 text-sm font-semibold text-ink hover:border-brand-gold/45 hover:bg-brand-gold/10 transition-colors whitespace-nowrap"
+          >
+            Review & export
+          </button>
+
         {isLive && (
-          <div className="flex flex-col items-end gap-1 flex-shrink-0">
+          <div className="flex flex-col items-end gap-1">
             <div className="flex items-center gap-2">
               {liveSyncing ? (
                 <span
@@ -216,7 +230,17 @@ export default function SessionPage() {
             )}
           </div>
         )}
+        </div>
       </div>
+
+      <SessionReviewExportModal
+        open={reviewExportOpen}
+        onClose={() => setReviewExportOpen(false)}
+        sessionId={sessionId}
+        medications={medications}
+        interventions={interventions}
+        visual={displayVisual}
+      />
 
       {/*
         Two-column layout:
@@ -228,7 +252,7 @@ export default function SessionPage() {
 
         {/* Body map — fixed proportion, centred when stacked */}
         <div className="w-full lg:w-[25%] flex-shrink-0 flex justify-center lg:justify-start">
-          <BodyMap visual={visual} sessionId={sessionId} deviceId={deviceId} />
+          <BodyMap visual={displayVisual} sessionId={sessionId} deviceId={deviceId} />
         </div>
 
         {/* Timeline — takes remaining width; min-w-0 + overflow-hidden contain scroll */}
@@ -236,7 +260,7 @@ export default function SessionPage() {
           <Timeline
             medications={medications}
             interventions={interventions}
-            visual={visual}
+            visual={displayVisual}
           />
         </div>
 

@@ -5,7 +5,7 @@
  * Token is persisted in localStorage so the user stays logged in on refresh.
  *
  * Usage anywhere in the app:
- *   const { user, token, login, logout } = useAuth();
+ *   const { token, user, displayName, login, logout } = useAuth();
  */
 
 import { createContext, useContext, useState } from "react";
@@ -16,24 +16,29 @@ const AuthContext = createContext(null);
 export function AuthProvider({ children }) {
   const [token, setToken] = useState(() => localStorage.getItem("lifelens_token"));
   const [user, setUser] = useState(() => localStorage.getItem("lifelens_user"));
+  const [displayName, setDisplayName] = useState(() => localStorage.getItem("lifelens_display_name"));
 
   async function login(username, password) {
     const data = await apiLogin(username, password);
     localStorage.setItem("lifelens_token", data.token);
     localStorage.setItem("lifelens_user", data.username);
+    localStorage.setItem("lifelens_display_name", data.display_name);
     setToken(data.token);
     setUser(data.username);
+    setDisplayName(data.display_name);
   }
 
   function logout() {
     localStorage.removeItem("lifelens_token");
     localStorage.removeItem("lifelens_user");
+    localStorage.removeItem("lifelens_display_name");
     setToken(null);
     setUser(null);
+    setDisplayName(null);
   }
 
   return (
-    <AuthContext.Provider value={{ token, user, login, logout }}>
+    <AuthContext.Provider value={{ token, user, displayName, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

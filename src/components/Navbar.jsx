@@ -42,11 +42,11 @@ function ThemeToggle() {
 }
 
 export default function Navbar() {
-  const { token, user, logout } = useAuth();
+  const { token, user, displayName, logout } = useAuth();
 
   return (
     <header className="sticky top-0 z-50 bg-app-bg/90 px-3 py-2 backdrop-blur-md dark:border-white/10 sm:px-8 sm:py-2.5">
-      <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-2 sm:gap-4">
+      <div className="mx-auto flex w-full max-w-full items-center justify-between gap-2 sm:gap-4">
         <Link
           to="/"
           className="flex min-w-0 flex-1 items-center gap-2 hover:opacity-90 transition-opacity sm:flex-initial sm:gap-3"
@@ -62,11 +62,11 @@ export default function Navbar() {
           {token && (
             <>
               <span
-                className="min-w-0 max-w-[5.5rem] truncate text-left text-muted capitalize sm:max-w-[10rem] text-sm md:max-w-[14rem] lg:max-w-xs"
-                title={user || undefined}
+                className="min-w-0 max-w-[3rem] truncate text-left text-muted sm:max-w-[10rem] text-xs sm:text-sm md:text-base md:max-w-[14rem] lg:max-w-xs"
+                title={displayName || undefined}
               >
                 <span className="hidden md:inline">User: </span>
-                <b className="font-semibold text-ink">{user}</b>
+                <b className="font-semibold text-ink">{displayName}</b>
               </span>
               <button
                 type="button"
