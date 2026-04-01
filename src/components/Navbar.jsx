@@ -45,7 +45,7 @@ export default function Navbar() {
   const { token, user, logout } = useAuth();
 
   return (
-    <header className="sticky top-0 z-50 border-b border-ink/10 bg-app-bg/90 px-3 py-2 backdrop-blur-md dark:border-white/10 sm:px-8 sm:py-2.5">
+    <header className="sticky top-0 z-50 bg-app-bg/90 px-3 py-2 backdrop-blur-md dark:border-white/10 sm:px-8 sm:py-2.5">
       <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-2 sm:gap-4">
         <Link
           to="/"
