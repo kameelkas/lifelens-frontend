@@ -18,13 +18,14 @@
  *   - On smaller screens they stack vertically (BodyMap above Timeline)
  */
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { fetchMedications, fetchInterventions, fetchVisual, fetchActiveSession } from "../api/client";
 import useSSE from "../hooks/useSSE";
 import BodyMap from "../components/BodyMap";
 import Timeline from "../components/Timeline";
 import { formatSessionStartedAt } from "../utils/sessionDisplay";
+import { normalizeVisualDuplicateLimbs } from "../utils/normalizeVisualDuplicateLimbs";
 
 /** Keep "Updating…" visible at least this long so fast local fetches don't flash sub-frame. */
 const LIVE_SYNC_MIN_DISPLAY_MS = 280;
@@ -43,6 +44,8 @@ export default function SessionPage() {
   const [liveSyncing, setLiveSyncing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  /** TEMP: Jetson duplicate limb workaround — see normalizeVisualDuplicateLimbs.js */
+  const displayVisual = useMemo(() => normalizeVisualDuplicateLimbs(visual), [visual]);
   const liveFetchCountRef = useRef(0);
   const liveSyncStartedAtRef = useRef(0);
   const liveSyncHideTimeoutRef = useRef(null);
@@ -228,7 +231,7 @@ export default function SessionPage() {
 
         {/* Body map — fixed proportion, centred when stacked */}
         <div className="w-full lg:w-[25%] flex-shrink-0 flex justify-center lg:justify-start">
-          <BodyMap visual={visual} sessionId={sessionId} deviceId={deviceId} />
+          <BodyMap visual={displayVisual} sessionId={sessionId} deviceId={deviceId} />
         </div>
 
         {/* Timeline — takes remaining width; min-w-0 + overflow-hidden contain scroll */}
@@ -236,7 +239,7 @@ export default function SessionPage() {
           <Timeline
             medications={medications}
             interventions={interventions}
-            visual={visual}
+            visual={displayVisual}
           />
         </div>
 
